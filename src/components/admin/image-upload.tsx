@@ -1,0 +1,164 @@
+"use client";
+
+import { useState, useCallback } from "react";
+import Image from "next/image";
+import { Button } from "@/components/ui/button";
+import { Upload, X, Star, Loader2 } from "lucide-react";
+import { toast } from "sonner";
+import { deleteProductImage, setPrimaryImage } from "@/actions/images";
+import { cn } from "@/lib/utils";
+import type { ProductImage } from "@/types";
+
+export function ImageUpload({
+  productId,
+  images: initialImages,
+}: {
+  productId: string;
+  images: ProductImage[];
+}) {
+  const [images, setImages] = useState(initialImages);
+  const [uploading, setUploading] = useState(false);
+
+  const handleUpload = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const files = e.target.files;
+      if (!files?.length) return;
+
+      if (images.length + files.length > 8) {
+        toast.error("Maximum 8 images per product");
+        return;
+      }
+
+      setUploading(true);
+
+      for (const file of Array.from(files)) {
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("product_id", productId);
+
+        try {
+          const res = await fetch("/api/images/upload", {
+            method: "POST",
+            body: formData,
+          });
+
+          const data = await res.json();
+
+          if (!res.ok) {
+            toast.error(data.error || "Upload failed");
+            continue;
+          }
+
+          setImages((prev) => [...prev, data.image]);
+          toast.success(`Uploaded ${file.name}`);
+        } catch {
+          toast.error(`Failed to upload ${file.name}`);
+        }
+      }
+
+      setUploading(false);
+      e.target.value = "";
+    },
+    [productId, images.length]
+  );
+
+  async function handleDelete(imageId: string, publicId: string) {
+    const result = await deleteProductImage(imageId, publicId);
+    if ("error" in result && result.error) {
+      toast.error(result.error as string);
+    } else {
+      setImages((prev) => prev.filter((img) => img.id !== imageId));
+      toast.success("Image deleted");
+    }
+  }
+
+  async function handleSetPrimary(imageId: string) {
+    const result = await setPrimaryImage(imageId, productId);
+    if ("error" in result && result.error) {
+      toast.error(result.error as string);
+    } else {
+      setImages((prev) =>
+        prev.map((img) => ({
+          ...img,
+          is_primary: img.id === imageId,
+        }))
+      );
+      toast.success("Primary image updated");
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
+        {images.map((image) => (
+          <div key={image.id} className="group relative aspect-3/4 overflow-hidden rounded-lg border">
+            <Image
+              src={image.url}
+              alt={image.alt_text ?? "Product image"}
+              fill
+              sizes="200px"
+              className="object-cover"
+            />
+            <div className="absolute inset-0 bg-black/0 transition-colors group-hover:bg-black/40">
+              <div className="absolute right-1 top-1 flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+                <Button
+                  variant="secondary"
+                  size="icon-xs"
+                  onClick={() => handleSetPrimary(image.id)}
+                  title="Set as primary"
+                >
+                  <Star
+                    className={cn(
+                      "h-3 w-3",
+                      image.is_primary && "fill-amber-400 text-amber-400"
+                    )}
+                  />
+                </Button>
+                <Button
+                  variant="destructive"
+                  size="icon-xs"
+                  onClick={() => handleDelete(image.id, image.public_id)}
+                  title="Delete image"
+                >
+                  <X className="h-3 w-3" />
+                </Button>
+              </div>
+            </div>
+            {image.is_primary && (
+              <span className="absolute bottom-1 left-1 rounded bg-primary px-1.5 py-0.5 text-[10px] font-medium text-primary-foreground">
+                Primary
+              </span>
+            )}
+          </div>
+        ))}
+
+        <label
+          className={cn(
+            "flex aspect-3/4 cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed transition-colors hover:border-primary hover:bg-primary/5",
+            uploading && "pointer-events-none opacity-50"
+          )}
+        >
+          {uploading ? (
+            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          ) : (
+            <>
+              <Upload className="h-6 w-6 text-muted-foreground" />
+              <span className="mt-1 text-xs text-muted-foreground">Upload</span>
+            </>
+          )}
+          <input
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            multiple
+            className="hidden"
+            onChange={handleUpload}
+            disabled={uploading}
+          />
+        </label>
+      </div>
+      <p className="text-xs text-muted-foreground">
+        Max 8 images. JPEG, PNG, or WebP. Max 5MB each.
+      </p>
+    </div>
+  );
+}
