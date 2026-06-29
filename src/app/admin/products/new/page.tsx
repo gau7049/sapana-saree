@@ -1,14 +1,8 @@
-import { createClient } from "@/lib/supabase/server";
 import { ProductForm } from "@/components/admin/product-form";
-import type { Category } from "@/types";
+import { getCategories } from "@/lib/queries/categories";
 
 export default async function NewProductPage() {
-  const supabase = await createClient();
-  const { data: categories } = await supabase
-    .from("categories")
-    .select("*")
-    .eq("is_active", true)
-    .order("name");
+  const categories = await getCategories();
 
   return (
     <div>
@@ -17,7 +11,7 @@ export default async function NewProductPage() {
         Create a new product. You can add images after saving.
       </p>
       <div className="mt-6 max-w-3xl">
-        <ProductForm categories={(categories ?? []) as Category[]} />
+        <ProductForm categories={categories} />
       </div>
     </div>
   );

@@ -12,6 +12,8 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 
+export const revalidate = 3600;
+
 export const metadata = createMetadata({
   title: "Categories",
   description: "Browse sarees by category — silk, cotton, designer, wedding, and more.",

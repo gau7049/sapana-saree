@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 import { cn } from "@/lib/utils";
+import { ProgressiveImage } from "@/components/shared/progressive-image";
 import type { ProductImage } from "@/types";
 
 export function ProductGallery({ images }: { images: ProductImage[] }) {
@@ -27,7 +27,8 @@ export function ProductGallery({ images }: { images: ProductImage[] }) {
     <div className="space-y-3">
       <div className="relative aspect-3/4 overflow-hidden rounded-xl bg-muted">
         {selected && (
-          <Image
+          <ProgressiveImage
+            key={selected.id}
             src={selected.url}
             alt={selected.alt_text ?? "Product image"}
             fill
@@ -51,7 +52,7 @@ export function ProductGallery({ images }: { images: ProductImage[] }) {
                   : "border-transparent hover:border-muted-foreground/30"
               )}
             >
-              <Image
+              <ProgressiveImage
                 src={image.url}
                 alt={image.alt_text ?? `View ${index + 1}`}
                 fill

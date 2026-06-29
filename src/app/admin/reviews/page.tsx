@@ -1,15 +1,30 @@
-import { createClient } from "@/lib/supabase/server";
 import { ReviewModerator } from "@/components/admin/review-moderator";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Star } from "lucide-react";
+import { isSupabaseConfigured } from "@/lib/supabase/helpers";
+import { MOCK_REVIEWS } from "@/lib/mock-data";
+
+async function getAdminReviews() {
+  if (isSupabaseConfigured()) {
+    try {
+      const { createClient } = await import("@/lib/supabase/server");
+      const supabase = await createClient();
+      const { data } = await supabase
+        .from("reviews")
+        .select("*, profiles(full_name, email), products(title, slug)")
+        .order("created_at", { ascending: false });
+      if (data) return data;
+    } catch {}
+  }
+  return MOCK_REVIEWS.map((r) => ({
+    ...r,
+    profiles: { ...r.profiles, email: "demo@example.com" },
+    products: { title: "Demo Product", slug: "#" },
+  }));
+}
 
 export default async function AdminReviewsPage() {
-  const supabase = await createClient();
-
-  const { data: reviews } = await supabase
-    .from("reviews")
-    .select("*, profiles(full_name, email), products(title, slug)")
-    .order("created_at", { ascending: false });
+  const reviews = await getAdminReviews();
 
   return (
     <div>

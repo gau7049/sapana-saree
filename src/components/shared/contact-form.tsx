@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2 } from "lucide-react";
-import { toast } from "sonner";
+import { handleFetch } from "@/lib/action-handler";
 
 export function ContactForm() {
   const [loading, setLoading] = useState(false);
@@ -18,30 +18,19 @@ export function ContactForm() {
     const form = e.currentTarget;
     const formData = new FormData(form);
 
-    try {
-      const res = await fetch("/api/contact", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: formData.get("name"),
-          email: formData.get("email"),
-          subject: formData.get("subject") || null,
-          message: formData.get("message"),
-        }),
-      });
+    const result = await handleFetch("/api/contact", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: formData.get("name"),
+        email: formData.get("email"),
+        subject: formData.get("subject") || null,
+        message: formData.get("message"),
+      }),
+    });
 
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || "Failed to send message");
-      }
-
-      toast.success("Message sent! We'll get back to you soon.");
-      form.reset();
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to send message");
-    } finally {
-      setLoading(false);
-    }
+    if (result.status) form.reset();
+    setLoading(false);
   }
 
   return (

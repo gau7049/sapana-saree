@@ -20,6 +20,8 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 
+export const revalidate = 3600;
+
 interface Props {
   params: Promise<{ slug: string }>;
 }
@@ -30,17 +32,23 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   if (!product) return { title: "Product Not Found" };
 
-  const primaryImage = product.product_images?.find((img) => img.is_primary) ??
+  const primaryImage =
+    product.product_images?.find((img) => img.is_primary) ??
     product.product_images?.[0];
 
   return {
     title: `${product.meta_title ?? product.title} | ${SITE_NAME}`,
-    description: product.meta_description ?? product.short_description ?? product.description?.slice(0, 160),
+    description:
+      product.meta_description ??
+      product.short_description ??
+      product.description?.slice(0, 160),
     alternates: { canonical: `${SITE_URL}/sarees/${product.slug}` },
     openGraph: {
       title: product.title,
       description: product.short_description ?? undefined,
-      images: primaryImage ? [{ url: primaryImage.url, width: 1200, height: 630 }] : undefined,
+      images: primaryImage
+        ? [{ url: primaryImage.url, width: 1200, height: 630 }]
+        : undefined,
       type: "website",
     },
   };
@@ -52,7 +60,7 @@ export default async function ProductDetailPage({ params }: Props) {
 
   if (!product) notFound();
 
-  const [reviews, relatedProducts] = await Promise.all([
+  const [{ reviews }, relatedProducts] = await Promise.all([
     getProductReviews(product.id),
     getRelatedProducts(product.id, product.category_id),
   ]);

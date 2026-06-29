@@ -1,15 +1,27 @@
-import { createClient } from "@/lib/supabase/server";
 import { InquiryManager } from "@/components/admin/inquiry-manager";
 import { EmptyState } from "@/components/shared/empty-state";
 import { MessageCircle } from "lucide-react";
+import { isSupabaseConfigured } from "@/lib/supabase/helpers";
+
+async function getAdminInquiries() {
+  if (isSupabaseConfigured()) {
+    try {
+      const { createClient } = await import("@/lib/supabase/server");
+      const supabase = await createClient();
+      const { data } = await supabase
+        .from("inquiries")
+        .select(
+          "*, profiles(full_name, email, phone), products(title, slug, price)"
+        )
+        .order("created_at", { ascending: false });
+      if (data) return data;
+    } catch {}
+  }
+  return [];
+}
 
 export default async function AdminInquiriesPage() {
-  const supabase = await createClient();
-
-  const { data: inquiries } = await supabase
-    .from("inquiries")
-    .select("*, profiles(full_name, email, phone), products(title, slug, price)")
-    .order("created_at", { ascending: false });
+  const inquiries = await getAdminInquiries();
 
   return (
     <div>

@@ -21,7 +21,7 @@ import {
   updateCategory,
   deleteCategory,
 } from "@/actions/categories";
-import { toast } from "sonner";
+import { handleAction } from "@/lib/action-handler";
 import { Badge } from "@/components/ui/badge";
 import type { Category } from "@/types";
 
@@ -32,45 +32,42 @@ export function CategoryManager({
 }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [createOpen, setCreateOpen] = useState(false);
 
   const roots = categories.filter((c) => !c.parent_id);
   const children = categories.filter((c) => c.parent_id);
 
-  async function handleCreate(formData: FormData) {
+  async function handleCreate(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
     setLoading(true);
-    const result = await createCategory(formData);
-    if (result.error) toast.error(result.error);
-    else {
-      toast.success("Category created");
-      router.refresh();
-    }
+    const formData = new FormData(e.currentTarget);
+    await handleAction(createCategory(formData), {
+      onSuccess: () => {
+        setCreateOpen(false);
+        router.refresh();
+      },
+    });
     setLoading(false);
   }
 
   async function handleUpdate(id: string, formData: FormData) {
     setLoading(true);
-    const result = await updateCategory(id, formData);
-    if (result.error) toast.error(result.error);
-    else {
-      toast.success("Category updated");
-      router.refresh();
-    }
+    await handleAction(updateCategory(id, formData), {
+      onSuccess: () => router.refresh(),
+    });
     setLoading(false);
   }
 
   async function handleDelete(id: string) {
     if (!confirm("Delete this category?")) return;
-    const result = await deleteCategory(id);
-    if (result.error) toast.error(result.error);
-    else {
-      toast.success("Category deleted");
-      router.refresh();
-    }
+    await handleAction(deleteCategory(id), {
+      onSuccess: () => router.refresh(),
+    });
   }
 
   return (
     <div className="space-y-4">
-      <Dialog>
+      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogTrigger render={<Button className="gap-2" />}>
           <Plus className="h-4 w-4" />
           Add Category
@@ -79,7 +76,7 @@ export function CategoryManager({
           <DialogHeader>
             <DialogTitle>New Category</DialogTitle>
           </DialogHeader>
-          <form action={handleCreate} className="space-y-4">
+          <form onSubmit={handleCreate} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="new-name">Name *</Label>
               <Input id="new-name" name="name" required />
@@ -182,7 +179,10 @@ function CategoryRow({
               <DialogTitle>Edit Category</DialogTitle>
             </DialogHeader>
             <form
-              action={(formData) => onUpdate(category.id, formData)}
+              onSubmit={async (e) => {
+                e.preventDefault();
+                await onUpdate(category.id, new FormData(e.currentTarget));
+              }}
               className="space-y-4"
             >
               <div className="space-y-2">

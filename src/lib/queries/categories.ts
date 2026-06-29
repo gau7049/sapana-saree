@@ -1,36 +1,53 @@
-import { createClient } from "@/lib/supabase/server";
+import { cache } from "react";
+import { unstable_cache } from "next/cache";
 import type { Category } from "@/types";
+import { MOCK_CATEGORIES } from "@/lib/mock-data";
+import { isSupabasePopulated } from "@/lib/supabase/populated";
+import { CACHE_TTL } from "@/lib/constants";
 
-export async function getCategories() {
-  const supabase = await createClient();
+const CATEGORY_FIELDS = "id, name, slug, description, image_url, parent_id, sort_order, is_active, created_at, updated_at";
 
-  const { data, error } = await supabase
-    .from("categories")
-    .select("*")
-    .eq("is_active", true)
-    .order("sort_order", { ascending: true });
-
-  if (error) {
-    console.error("Error fetching categories:", error);
-    return [];
+async function fetchCategories() {
+  if (await isSupabasePopulated()) {
+    try {
+      const { createClient } = await import("@/lib/supabase/server");
+      const supabase = await createClient();
+      const { data } = await supabase
+        .from("categories")
+        .select(CATEGORY_FIELDS)
+        .eq("is_active", true)
+        .order("sort_order");
+      if (data && data.length > 0) return data as Category[];
+    } catch {}
   }
-
-  return data as Category[];
+  return MOCK_CATEGORIES.filter((c) => c.is_active).sort(
+    (a, b) => a.sort_order - b.sort_order
+  ) as Category[];
 }
 
-export async function getCategoryBySlug(slug: string) {
-  const supabase = await createClient();
+export const getCategories = cache(
+  unstable_cache(fetchCategories, ["categories"], {
+    tags: ["categories"],
+    revalidate: CACHE_TTL,
+  })
+);
 
-  const { data, error } = await supabase
-    .from("categories")
-    .select("*")
-    .eq("slug", slug)
-    .eq("is_active", true)
-    .single();
-
-  if (error) return null;
-  return data as Category;
-}
+export const getCategoryBySlug = cache(async (slug: string) => {
+  if (await isSupabasePopulated()) {
+    try {
+      const { createClient } = await import("@/lib/supabase/server");
+      const supabase = await createClient();
+      const { data } = await supabase
+        .from("categories")
+        .select(CATEGORY_FIELDS)
+        .eq("slug", slug)
+        .eq("is_active", true)
+        .single();
+      if (data) return data as Category;
+    } catch {}
+  }
+  return MOCK_CATEGORIES.find((c) => c.slug === slug && c.is_active) ?? null;
+});
 
 export async function getCategoryTree() {
   const categories = await getCategories();

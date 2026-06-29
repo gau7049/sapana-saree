@@ -21,11 +21,13 @@ export function SignupForm() {
   const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  async function handleSubmit(formData: FormData) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
     setLoading(true);
     setError(null);
     setSuccess(null);
 
+    const formData = new FormData(e.currentTarget);
     const password = formData.get("password") as string;
     const confirmPassword = formData.get("confirm_password") as string;
 
@@ -36,10 +38,10 @@ export function SignupForm() {
     }
 
     const result = await signUp(formData);
-    if (result?.error) {
-      setError(result.error);
-    } else if (result?.success) {
-      setSuccess(result.success);
+    if (result.status) {
+      setSuccess(result.message);
+    } else {
+      setError(result.message);
     }
     setLoading(false);
   }
@@ -63,7 +65,7 @@ export function SignupForm() {
             {success}
           </div>
         )}
-        <form action={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="full_name">Full Name</Label>
             <Input

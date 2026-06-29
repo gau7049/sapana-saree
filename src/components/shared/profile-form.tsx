@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
 import { updateProfile } from "@/actions/profile";
-import { toast } from "sonner";
+import { handleAction } from "@/lib/action-handler";
 
 export function ProfileForm({
   email,
@@ -20,14 +20,11 @@ export function ProfileForm({
 }) {
   const [loading, setLoading] = useState(false);
 
-  async function handleSubmit(formData: FormData) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
     setLoading(true);
-    const result = await updateProfile(formData);
-    if ("error" in result && result.error) {
-      toast.error(result.error as string);
-    } else {
-      toast.success("Profile updated");
-    }
+    const formData = new FormData(e.currentTarget);
+    await handleAction(updateProfile(formData));
     setLoading(false);
   }
 
@@ -37,7 +34,7 @@ export function ProfileForm({
         <CardTitle>Profile Information</CardTitle>
       </CardHeader>
       <CardContent>
-        <form action={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
             <Input id="email" value={email} disabled className="bg-muted" />

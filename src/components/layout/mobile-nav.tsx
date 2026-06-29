@@ -20,7 +20,7 @@ export function MobileNav() {
 
   return (
     <Sheet open={isMobileNavOpen} onOpenChange={setMobileNavOpen}>
-      <SheetContent side="left" className="w-72 p-0">
+      <SheetContent side="left" className="w-72 p-0" showCloseButton={false}>
         <SheetHeader className="border-b p-4">
           <div className="flex items-center justify-between">
             <SheetTitle className="text-lg font-bold">{SITE_NAME}</SheetTitle>

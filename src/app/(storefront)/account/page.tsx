@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { createMetadata } from "@/lib/seo";
-import { createClient } from "@/lib/supabase/server";
+import { isSupabaseConfigured } from "@/lib/supabase/helpers";
 import { ProfileForm } from "@/components/shared/profile-form";
 
 export const metadata = createMetadata({
@@ -10,6 +10,11 @@ export const metadata = createMetadata({
 });
 
 export default async function AccountPage() {
+  if (!isSupabaseConfigured()) {
+    redirect("/login?redirect=/account");
+  }
+
+  const { createClient } = await import("@/lib/supabase/server");
   const supabase = await createClient();
 
   const {

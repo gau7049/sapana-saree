@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { createMetadata } from "@/lib/seo";
-import { createClient } from "@/lib/supabase/server";
+import { isSupabaseConfigured } from "@/lib/supabase/helpers";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/shared/empty-state";
 import { MessageCircle } from "lucide-react";
@@ -21,6 +21,11 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 export default async function InquiriesPage() {
+  if (!isSupabaseConfigured()) {
+    redirect("/login?redirect=/account/inquiries");
+  }
+
+  const { createClient } = await import("@/lib/supabase/server");
   const supabase = await createClient();
 
   const {

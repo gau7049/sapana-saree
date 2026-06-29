@@ -25,9 +25,9 @@ export function Header() {
   const { setMobileNavOpen } = useUIStore();
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center gap-4">
+    <header className="sticky top-0 z-50 w-full border-b bg-card shadow-sm">
+      <div className="mx-auto flex h-16 max-w-7xl items-center gap-4 px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center gap-3">
           <Button
             variant="ghost"
             size="icon"
@@ -37,8 +37,8 @@ export function Header() {
           >
             <Menu className="h-5 w-5" />
           </Button>
-          <Link href="/" className="flex items-center gap-2">
-            <span className="text-xl font-bold tracking-tight">
+          <Link href="/" className="flex shrink-0 items-center gap-2">
+            <span className="text-xl font-bold tracking-tight text-primary">
               {SITE_NAME}
             </span>
           </Link>
@@ -61,10 +61,23 @@ export function Header() {
           ))}
         </nav>
 
+        <div className="hidden flex-1 sm:block lg:max-w-md">
+          <Link
+            href="/search"
+            className="flex h-10 w-full items-center gap-2 rounded-lg border bg-muted/50 px-3 text-sm text-muted-foreground transition-colors hover:border-primary/30 hover:bg-muted"
+          >
+            <Search className="h-4 w-4 shrink-0" />
+            <span>Search sarees, categories...</span>
+          </Link>
+        </div>
+
         <div className="flex items-center gap-1">
           <Link
             href="/search"
-            className={buttonVariants({ variant: "ghost", size: "icon" })}
+            className={cn(
+              buttonVariants({ variant: "ghost", size: "icon" }),
+              "sm:hidden"
+            )}
             aria-label="Search"
           >
             <Search className="h-5 w-5" />

@@ -1,21 +1,27 @@
 import type { MetadataRoute } from "next";
 import { SITE_URL } from "@/lib/constants";
-import { createClient } from "@/lib/supabase/server";
+import { isSupabaseConfigured } from "@/lib/supabase/helpers";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const supabase = await createClient();
+  let productsRes: { data: { slug: string; updated_at: string }[] | null } = { data: null };
+  let categoriesRes: { data: { slug: string; updated_at: string }[] | null } = { data: null };
 
-  const [productsRes, categoriesRes] = await Promise.all([
-    supabase
-      .from("products")
-      .select("slug, updated_at")
-      .eq("status", "published")
-      .order("updated_at", { ascending: false }),
-    supabase
-      .from("categories")
-      .select("slug, updated_at")
-      .eq("is_active", true),
-  ]);
+  if (isSupabaseConfigured()) {
+    const { createClient } = await import("@/lib/supabase/server");
+    const supabase = await createClient();
+
+    [productsRes, categoriesRes] = await Promise.all([
+      supabase
+        .from("products")
+        .select("slug, updated_at")
+        .eq("status", "published")
+        .order("updated_at", { ascending: false }),
+      supabase
+        .from("categories")
+        .select("slug, updated_at")
+        .eq("is_active", true),
+    ]);
+  }
 
   const staticPages: MetadataRoute.Sitemap = [
     { url: SITE_URL, lastModified: new Date(), changeFrequency: "daily", priority: 1 },

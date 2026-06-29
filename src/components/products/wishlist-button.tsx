@@ -7,7 +7,7 @@ import { Heart, Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { addToWishlist, removeFromWishlist } from "@/actions/wishlists";
 import { createClient } from "@/lib/supabase/client";
-import { toast } from "sonner";
+import { handleAction } from "@/lib/action-handler";
 import { cn } from "@/lib/utils";
 
 export function WishlistButton({ productId }: { productId: string }) {
@@ -36,16 +36,13 @@ export function WishlistButton({ productId }: { productId: string }) {
 
     setLoading(true);
 
-    const result = isWishlisted
-      ? await removeFromWishlist(productId)
-      : await addToWishlist(productId);
+    const action = isWishlisted
+      ? removeFromWishlist(productId)
+      : addToWishlist(productId);
 
-    if ("error" in result && result.error) {
-      toast.error(result.error as string);
-    } else {
-      setIsWishlisted(!isWishlisted);
-      toast.success(isWishlisted ? "Removed from wishlist" : "Added to wishlist");
-    }
+    await handleAction(action, {
+      onSuccess: () => setIsWishlisted(!isWishlisted),
+    });
 
     setLoading(false);
   }

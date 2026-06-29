@@ -12,20 +12,16 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { MoreHorizontal, Pencil, Trash2, ExternalLink } from "lucide-react";
 import { deleteProduct } from "@/actions/products";
-import { toast } from "sonner";
+import { handleAction } from "@/lib/action-handler";
 
-export function AdminProductActions({ productId }: { productId: string }) {
+export function AdminProductActions({ productId, productSlug }: { productId: string; productSlug: string }) {
   const router = useRouter();
 
   async function handleDelete() {
     if (!confirm("Are you sure you want to delete this product?")) return;
-    const result = await deleteProduct(productId);
-    if (result.error) {
-      toast.error(result.error);
-    } else {
-      toast.success("Product deleted");
-      router.refresh();
-    }
+    await handleAction(deleteProduct(productId), {
+      onSuccess: () => router.refresh(),
+    });
   }
 
   return (
@@ -40,7 +36,7 @@ export function AdminProductActions({ productId }: { productId: string }) {
           <Pencil className="mr-2 h-4 w-4" />
           Edit
         </DropdownMenuItem>
-        <DropdownMenuItem render={<Link href={`/sarees/${productId}`} target="_blank" />}>
+        <DropdownMenuItem render={<Link href={`/sarees/${productSlug}`} target="_blank" />}>
           <ExternalLink className="mr-2 h-4 w-4" />
           View
         </DropdownMenuItem>

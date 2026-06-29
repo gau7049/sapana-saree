@@ -2,6 +2,8 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { actionSuccess, actionError } from "@/lib/api/response";
+import { wishlists as msg, common } from "@/lib/messages";
 
 export async function addToWishlist(productId: string) {
   const supabase = await createClient();
@@ -9,7 +11,7 @@ export async function addToWishlist(productId: string) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) return { error: "Not authenticated" };
+  if (!user) return actionError(common.NOT_AUTHENTICATED);
 
   const { error } = await supabase.from("wishlists").insert({
     user_id: user.id,
@@ -17,12 +19,12 @@ export async function addToWishlist(productId: string) {
   });
 
   if (error) {
-    if (error.code === "23505") return { error: "Already in wishlist" };
-    return { error: error.message };
+    if (error.code === "23505") return actionError(msg.ALREADY_EXISTS);
+    return actionError(error.message);
   }
 
   revalidatePath("/wishlist");
-  return { success: true };
+  return actionSuccess(msg.ADDED);
 }
 
 export async function removeFromWishlist(productId: string) {
@@ -31,7 +33,7 @@ export async function removeFromWishlist(productId: string) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) return { error: "Not authenticated" };
+  if (!user) return actionError(common.NOT_AUTHENTICATED);
 
   const { error } = await supabase
     .from("wishlists")
@@ -39,8 +41,8 @@ export async function removeFromWishlist(productId: string) {
     .eq("user_id", user.id)
     .eq("product_id", productId);
 
-  if (error) return { error: error.message };
+  if (error) return actionError(error.message);
 
   revalidatePath("/wishlist");
-  return { success: true };
+  return actionSuccess(msg.REMOVED);
 }

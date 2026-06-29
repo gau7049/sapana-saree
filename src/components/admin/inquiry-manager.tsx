@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { updateInquiryStatus } from "@/actions/inquiries";
-import { toast } from "sonner";
+import { handleAction } from "@/lib/action-handler";
 import type { InquiryStatus } from "@/types";
 
 interface InquiryRow {
@@ -32,12 +32,9 @@ export function InquiryManager({ inquiries }: { inquiries: InquiryRow[] }) {
   const router = useRouter();
 
   async function handleStatusChange(id: string, status: InquiryStatus) {
-    const result = await updateInquiryStatus(id, status);
-    if (result.error) toast.error(result.error);
-    else {
-      toast.success("Status updated");
-      router.refresh();
-    }
+    await handleAction(updateInquiryStatus(id, status), {
+      onSuccess: () => router.refresh(),
+    });
   }
 
   return (

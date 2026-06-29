@@ -11,6 +11,7 @@ import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
+import { reviews as msg } from "@/lib/messages";
 
 export function ReviewForm({ productId }: { productId: string }) {
   const { user } = useAuth();
@@ -51,13 +52,13 @@ export function ReviewForm({ productId }: { productId: string }) {
 
     if (error) {
       if (error.code === "23505") {
-        toast.error("You've already reviewed this product");
+        toast.error(msg.ALREADY_REVIEWED);
       } else {
         toast.error(error.message);
       }
     } else {
       setSubmitted(true);
-      toast.success("Review submitted for moderation");
+      toast.success(msg.SUBMITTED);
       router.refresh();
     }
 

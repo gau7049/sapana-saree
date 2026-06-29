@@ -14,6 +14,8 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 
+export const revalidate = 3600;
+
 export const metadata = createMetadata({
   title: "All Sarees",
   description:

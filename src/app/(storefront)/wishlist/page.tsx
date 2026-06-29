@@ -1,5 +1,5 @@
 import { createMetadata } from "@/lib/seo";
-import { createClient } from "@/lib/supabase/server";
+import { isSupabaseConfigured } from "@/lib/supabase/helpers";
 import { ProductGrid } from "@/components/products/product-grid";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Heart } from "lucide-react";
@@ -14,6 +14,19 @@ export const metadata = createMetadata({
 });
 
 export default async function WishlistPage() {
+  if (!isSupabaseConfigured()) {
+    return (
+      <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+        <EmptyState
+          icon={Heart}
+          title="Wishlist unavailable"
+          description="Supabase is not configured. Please set up your environment variables."
+        />
+      </div>
+    );
+  }
+
+  const { createClient } = await import("@/lib/supabase/server");
   const supabase = await createClient();
 
   const {

@@ -2,6 +2,8 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { actionSuccess, actionError } from "@/lib/api/response";
+import { profile as msg, common } from "@/lib/messages";
 
 export async function updateProfile(formData: FormData) {
   const supabase = await createClient();
@@ -9,7 +11,7 @@ export async function updateProfile(formData: FormData) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) return { error: "Not authenticated" };
+  if (!user) return actionError(common.NOT_AUTHENTICATED);
 
   const { error } = await supabase
     .from("profiles")
@@ -19,8 +21,8 @@ export async function updateProfile(formData: FormData) {
     })
     .eq("id", user.id);
 
-  if (error) return { error: error.message };
+  if (error) return actionError(error.message);
 
   revalidatePath("/account");
-  return { success: "Profile updated." };
+  return actionSuccess(msg.UPDATED);
 }

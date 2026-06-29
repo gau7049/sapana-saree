@@ -1,11 +1,12 @@
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Package, Plus } from "lucide-react";
 import { AdminProductActions } from "@/components/admin/product-actions";
 import { cn } from "@/lib/utils";
+import { isSupabaseConfigured } from "@/lib/supabase/helpers";
+import { MOCK_PRODUCTS } from "@/lib/mock-data";
 
 const STATUS_STYLE: Record<string, string> = {
   draft: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300",
@@ -13,13 +14,38 @@ const STATUS_STYLE: Record<string, string> = {
   archived: "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300",
 };
 
-export default async function AdminProductsPage() {
-  const supabase = await createClient();
+async function getAdminProducts() {
+  if (isSupabaseConfigured()) {
+    try {
+      const { createClient } = await import("@/lib/supabase/server");
+      const supabase = await createClient();
+      const { data } = await supabase
+        .from("products")
+        .select(
+          "id, title, slug, price, status, is_featured, created_at, categories(name)"
+        )
+        .order("created_at", { ascending: false });
+      if (data) return { products: data, isDemo: false };
+    } catch {}
+  }
 
-  const { data: products } = await supabase
-    .from("products")
-    .select("id, title, slug, price, status, is_featured, created_at, categories(name)")
-    .order("created_at", { ascending: false });
+  return {
+    products: MOCK_PRODUCTS.map((p) => ({
+      id: p.id,
+      title: p.title,
+      slug: p.slug,
+      price: p.price,
+      status: p.status,
+      is_featured: p.is_featured,
+      created_at: p.created_at,
+      categories: p.categories ? { name: p.categories.name } : null,
+    })),
+    isDemo: true,
+  };
+}
+
+export default async function AdminProductsPage() {
+  const { products, isDemo } = await getAdminProducts();
 
   return (
     <div>
@@ -28,6 +54,7 @@ export default async function AdminProductsPage() {
           <h1 className="text-2xl font-bold">Products</h1>
           <p className="text-sm text-muted-foreground">
             {products?.length ?? 0} products
+            {isDemo && " (demo data)"}
           </p>
         </div>
         <Link
@@ -38,6 +65,14 @@ export default async function AdminProductsPage() {
           Add Product
         </Link>
       </div>
+
+      {isDemo && (
+        <div className="mt-4 rounded-lg border border-yellow-300 bg-yellow-50 p-4 text-sm text-yellow-800 dark:border-yellow-700 dark:bg-yellow-950 dark:text-yellow-200">
+          <strong>Demo Mode:</strong> Showing mock data. Connect Supabase to
+          add real products. Products you add via the admin panel will replace
+          this demo data.
+        </div>
+      )}
 
       {!products || products.length === 0 ? (
         <div className="mt-8">
@@ -77,16 +112,23 @@ export default async function AdminProductsPage() {
                   )}
                 </div>
                 <div className="mt-0.5 flex items-center gap-3 text-sm text-muted-foreground">
-                  <span>₹{Number(product.price).toLocaleString("en-IN")}</span>
+                  <span>
+                    ₹{Number(product.price).toLocaleString("en-IN")}
+                  </span>
                   {product.categories && (
-                    <span>{(product.categories as unknown as { name: string }).name}</span>
+                    <span>
+                      {
+                        (product.categories as unknown as { name: string })
+                          .name
+                      }
+                    </span>
                   )}
                   <span>
                     {new Date(product.created_at).toLocaleDateString("en-IN")}
                   </span>
                 </div>
               </div>
-              <AdminProductActions productId={product.id} />
+              {!isDemo && <AdminProductActions productId={product.id} productSlug={product.slug} />}
             </div>
           ))}
         </div>

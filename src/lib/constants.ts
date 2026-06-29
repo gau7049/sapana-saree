@@ -16,6 +16,29 @@ export const ALLOWED_IMAGE_TYPES = [
 ] as const;
 
 export const PRODUCTS_PER_PAGE = 12;
+export const REVIEWS_PER_PAGE = 10;
+export const DEFAULT_PAGE = 1;
+
+export const ADMIN_ROLES = ["admin", "super_admin"] as const;
+
+export const RATE_LIMIT_MAX = 50;
+export const RATE_LIMIT_WINDOW_MS = 60_000;
+export const API_TIMEOUT_MS = 8_000;
+
+export const ISR_REVALIDATE_INTERVAL = 3600;
+export const CACHE_TTL = 3600;
+
+export const HTTP_STATUS = {
+  OK: 200,
+  CREATED: 201,
+  BAD_REQUEST: 400,
+  UNAUTHORIZED: 401,
+  FORBIDDEN: 403,
+  NOT_FOUND: 404,
+  CONFLICT: 409,
+  TOO_MANY_REQUESTS: 429,
+  INTERNAL_SERVER_ERROR: 500,
+} as const;
 
 export const NAV_LINKS = [
   { label: "Home", href: "/" },

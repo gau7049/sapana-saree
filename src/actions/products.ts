@@ -1,8 +1,15 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
+import { actionSuccess, actionError } from "@/lib/api/response";
+import { products as msg, common } from "@/lib/messages";
+import { resetSupabaseCheck } from "@/lib/supabase/populated";
+import { requireAdmin } from "@/lib/auth-guard";
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("actions:products");
 
 function generateSlug(title: string): string {
   return title
@@ -14,6 +21,7 @@ function generateSlug(title: string): string {
 }
 
 export async function createProduct(formData: FormData) {
+  try { await requireAdmin(); } catch { return actionError(common.FORBIDDEN); }
   const supabase = await createClient();
 
   const title = formData.get("title") as string;
@@ -43,14 +51,22 @@ export async function createProduct(formData: FormData) {
     .select("id")
     .single();
 
-  if (error) return { error: error.message };
+  if (error) {
+    logger.error("Failed to create product", { error: error.message });
+    return actionError(msg.CREATE_ERROR);
+  }
 
+  resetSupabaseCheck();
+  revalidateTag("featured-products", { expire: 0 });
+  revalidateTag("product-filters", { expire: 0 });
+  revalidateTag("dashboard-stats", { expire: 0 });
   revalidatePath("/admin/products");
   revalidatePath("/sarees");
   redirect(`/admin/products/${data.id}/edit`);
 }
 
 export async function updateProduct(id: string, formData: FormData) {
+  try { await requireAdmin(); } catch { return actionError(common.FORBIDDEN); }
   const supabase = await createClient();
 
   const { error } = await supabase
@@ -75,21 +91,34 @@ export async function updateProduct(id: string, formData: FormData) {
     })
     .eq("id", id);
 
-  if (error) return { error: error.message };
+  if (error) {
+    logger.error("Failed to update product", { error: error.message });
+    return actionError(common.SOMETHING_WENT_WRONG);
+  }
 
+  revalidateTag("featured-products", { expire: 0 });
+  revalidateTag("product-filters", { expire: 0 });
+  revalidateTag("dashboard-stats", { expire: 0 });
   revalidatePath("/admin/products");
   revalidatePath("/sarees");
-  return { success: "Product updated successfully." };
+  return actionSuccess(msg.UPDATED);
 }
 
 export async function deleteProduct(id: string) {
+  try { await requireAdmin(); } catch { return actionError(common.FORBIDDEN); }
   const supabase = await createClient();
 
   const { error } = await supabase.from("products").delete().eq("id", id);
 
-  if (error) return { error: error.message };
+  if (error) {
+    logger.error("Failed to delete product", { error: error.message });
+    return actionError(common.SOMETHING_WENT_WRONG);
+  }
 
+  revalidateTag("featured-products", { expire: 0 });
+  revalidateTag("product-filters", { expire: 0 });
+  revalidateTag("dashboard-stats", { expire: 0 });
   revalidatePath("/admin/products");
   revalidatePath("/sarees");
-  return { success: "Product deleted." };
+  return actionSuccess(msg.DELETED);
 }

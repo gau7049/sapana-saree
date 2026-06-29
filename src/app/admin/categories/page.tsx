@@ -1,14 +1,25 @@
-import { createClient } from "@/lib/supabase/server";
 import { CategoryManager } from "@/components/admin/category-manager";
+import { isSupabaseConfigured } from "@/lib/supabase/helpers";
+import { MOCK_CATEGORIES } from "@/lib/mock-data";
 import type { Category } from "@/types";
 
-export default async function AdminCategoriesPage() {
-  const supabase = await createClient();
+async function getAdminCategories(): Promise<Category[]> {
+  if (isSupabaseConfigured()) {
+    try {
+      const { createClient } = await import("@/lib/supabase/server");
+      const supabase = await createClient();
+      const { data } = await supabase
+        .from("categories")
+        .select("*")
+        .order("sort_order");
+      if (data) return data as Category[];
+    } catch {}
+  }
+  return MOCK_CATEGORIES as Category[];
+}
 
-  const { data: categories } = await supabase
-    .from("categories")
-    .select("*")
-    .order("sort_order");
+export default async function AdminCategoriesPage() {
+  const categories = await getAdminCategories();
 
   return (
     <div>
@@ -17,7 +28,7 @@ export default async function AdminCategoriesPage() {
         Manage product categories and subcategories.
       </p>
       <div className="mt-6 max-w-2xl">
-        <CategoryManager categories={(categories ?? []) as Category[]} />
+        <CategoryManager categories={categories} />
       </div>
     </div>
   );

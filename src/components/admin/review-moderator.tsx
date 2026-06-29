@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { StarRating } from "@/components/shared/star-rating";
 import { Check, X, Trash2 } from "lucide-react";
 import { moderateReview, deleteReview } from "@/actions/reviews";
-import { toast } from "sonner";
+import { handleAction } from "@/lib/action-handler";
 
 interface ReviewRow {
   id: string;
@@ -29,22 +29,16 @@ export function ReviewModerator({ reviews }: { reviews: ReviewRow[] }) {
   const router = useRouter();
 
   async function handleModerate(id: string, status: "approved" | "rejected") {
-    const result = await moderateReview(id, status);
-    if (result.error) toast.error(result.error);
-    else {
-      toast.success(`Review ${status}`);
-      router.refresh();
-    }
+    await handleAction(moderateReview(id, status), {
+      onSuccess: () => router.refresh(),
+    });
   }
 
   async function handleDelete(id: string) {
     if (!confirm("Delete this review?")) return;
-    const result = await deleteReview(id);
-    if (result.error) toast.error(result.error);
-    else {
-      toast.success("Review deleted");
-      router.refresh();
-    }
+    await handleAction(deleteReview(id), {
+      onSuccess: () => router.refresh(),
+    });
   }
 
   return (

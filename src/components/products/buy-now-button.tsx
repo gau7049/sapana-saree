@@ -8,6 +8,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { buildWhatsAppUrl } from "@/lib/whatsapp";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
+import { common } from "@/lib/messages";
 import type { ProductWithImages } from "@/types";
 
 export function BuyNowButton({ product }: { product: ProductWithImages }) {
@@ -44,27 +45,18 @@ export function BuyNowButton({ product }: { product: ProductWithImages }) {
         userPhone,
       });
 
-      const message = buildWhatsAppUrl({
-        productTitle: product.title,
-        productId: product.id,
-        category: product.categories?.name ?? "Uncategorized",
-        price: product.price,
-        userName,
-        userPhone,
-      });
-
       await supabase.from("inquiries").insert({
         user_id: user.id,
         product_id: product.id,
         whatsapp_message: decodeURIComponent(
-          message.split("?text=")[1] ?? ""
+          whatsappUrl.split("?text=")[1] ?? ""
         ),
       });
 
       window.open(whatsappUrl, "_blank");
       toast.success("Opening WhatsApp... Your inquiry has been recorded.");
     } catch {
-      toast.error("Something went wrong. Please try again.");
+      toast.error(common.SOMETHING_WENT_WRONG);
     } finally {
       setLoading(false);
     }

@@ -4,10 +4,12 @@ import { useState, useCallback } from "react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Upload, X, Star, Loader2 } from "lucide-react";
-import { toast } from "sonner";
 import { deleteProductImage, setPrimaryImage } from "@/actions/images";
+import { handleAction, handleFetch } from "@/lib/action-handler";
 import { cn } from "@/lib/utils";
 import type { ProductImage } from "@/types";
+import { MAX_IMAGES_PER_PRODUCT, MAX_IMAGE_SIZE_BYTES, ALLOWED_IMAGE_TYPES } from "@/lib/constants";
+import { toast } from "sonner";
 
 export function ImageUpload({
   productId,
@@ -24,9 +26,20 @@ export function ImageUpload({
       const files = e.target.files;
       if (!files?.length) return;
 
-      if (images.length + files.length > 8) {
-        toast.error("Maximum 8 images per product");
+      if (images.length + files.length > MAX_IMAGES_PER_PRODUCT) {
+        toast.error(`Maximum ${MAX_IMAGES_PER_PRODUCT} images per product`);
         return;
+      }
+
+      for (const file of Array.from(files)) {
+        if (!ALLOWED_IMAGE_TYPES.includes(file.type as typeof ALLOWED_IMAGE_TYPES[number])) {
+          toast.error(`${file.name}: Invalid file type. Only JPEG, PNG, and WebP are allowed.`);
+          return;
+        }
+        if (file.size > MAX_IMAGE_SIZE_BYTES) {
+          toast.error(`${file.name}: File too large. Maximum size is 5MB.`);
+          return;
+        }
       }
 
       setUploading(true);
@@ -36,23 +49,15 @@ export function ImageUpload({
         formData.append("file", file);
         formData.append("product_id", productId);
 
-        try {
-          const res = await fetch("/api/images/upload", {
-            method: "POST",
-            body: formData,
-          });
+        const result = await handleFetch<ProductImage>(
+          "/api/images/upload",
+          { method: "POST", body: formData },
+          { showToast: false }
+        );
 
-          const data = await res.json();
-
-          if (!res.ok) {
-            toast.error(data.error || "Upload failed");
-            continue;
-          }
-
-          setImages((prev) => [...prev, data.image]);
+        if (result.status && result.result) {
+          setImages((prev) => [...prev, result.result!]);
           toast.success(`Uploaded ${file.name}`);
-        } catch {
-          toast.error(`Failed to upload ${file.name}`);
         }
       }
 
@@ -63,28 +68,21 @@ export function ImageUpload({
   );
 
   async function handleDelete(imageId: string, publicId: string) {
-    const result = await deleteProductImage(imageId, publicId);
-    if ("error" in result && result.error) {
-      toast.error(result.error as string);
-    } else {
-      setImages((prev) => prev.filter((img) => img.id !== imageId));
-      toast.success("Image deleted");
-    }
+    await handleAction(deleteProductImage(imageId, publicId), {
+      onSuccess: () => setImages((prev) => prev.filter((img) => img.id !== imageId)),
+    });
   }
 
   async function handleSetPrimary(imageId: string) {
-    const result = await setPrimaryImage(imageId, productId);
-    if ("error" in result && result.error) {
-      toast.error(result.error as string);
-    } else {
-      setImages((prev) =>
-        prev.map((img) => ({
-          ...img,
-          is_primary: img.id === imageId,
-        }))
-      );
-      toast.success("Primary image updated");
-    }
+    await handleAction(setPrimaryImage(imageId, productId), {
+      onSuccess: () =>
+        setImages((prev) =>
+          prev.map((img) => ({
+            ...img,
+            is_primary: img.id === imageId,
+          }))
+        ),
+    });
   }
 
   return (
@@ -157,7 +155,7 @@ export function ImageUpload({
         </label>
       </div>
       <p className="text-xs text-muted-foreground">
-        Max 8 images. JPEG, PNG, or WebP. Max 5MB each.
+        Max {MAX_IMAGES_PER_PRODUCT} images. JPEG, PNG, or WebP. Max 5MB each.
       </p>
     </div>
   );
