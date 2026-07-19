@@ -74,7 +74,9 @@ export function HeroImageUpload({ initialUrl }: { initialUrl: string | null }) {
         ) : (
           <div className="flex h-full flex-col items-center justify-center gap-1 text-muted-foreground">
             <span className="text-3xl">🪡</span>
-            <span className="text-xs">No hero image set — placeholder is shown</span>
+            <span className="px-3 text-center text-xs">
+              No custom hero uploaded — the default photo is shown on the homepage
+            </span>
           </div>
         )}
       </div>

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -24,6 +25,7 @@ import {
 } from "@/actions/categories";
 import { handleAction } from "@/lib/action-handler";
 import { Badge } from "@/components/ui/badge";
+import { CategoryImageUpload } from "@/components/admin/category-image-upload";
 import type { Category } from "@/types";
 
 export function CategoryManager({
@@ -208,7 +210,20 @@ function CategoryRow({
 }) {
   return (
     <div className="flex items-center justify-between p-3">
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2.5">
+        <div className="relative h-9 w-12 shrink-0 overflow-hidden rounded border bg-muted">
+          {category.image_url ? (
+            <Image
+              src={category.image_url}
+              alt={category.name}
+              fill
+              sizes="48px"
+              className="object-cover"
+            />
+          ) : (
+            <div className="flex h-full items-center justify-center text-sm">🪡</div>
+          )}
+        </div>
         <span className="font-medium">{category.name}</span>
         {!category.is_active && (
           <Badge variant="secondary" className="text-xs">
@@ -225,6 +240,11 @@ function CategoryRow({
             <DialogHeader>
               <DialogTitle>Edit Category</DialogTitle>
             </DialogHeader>
+            {/* Uploads save immediately, independent of the form below. */}
+            <CategoryImageUpload
+              categoryId={category.id}
+              imageUrl={category.image_url}
+            />
             <form
               onSubmit={async (e) => {
                 e.preventDefault();

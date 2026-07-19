@@ -44,7 +44,8 @@ export default async function HomePage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <HeroSection imageUrl={siteSettings?.hero_image_url} />
+      {/* Admin-uploaded hero wins; the bundled stock photo is the default. */}
+      <HeroSection imageUrl={siteSettings?.hero_image_url ?? "/images/hero.jpg"} />
       <Suspense
         fallback={
           <section className="border-b bg-card py-8">

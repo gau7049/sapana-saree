@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { ArrowRight } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -36,8 +37,18 @@ export async function CategoryShowcase() {
               href={`/categories/${category.slug}`}
               className="group flex shrink-0 flex-col items-center gap-2.5"
             >
-              <div className="flex h-14 w-14 items-center justify-center rounded-full border border-border bg-card text-2xl transition-colors group-hover:border-foreground/40 sm:h-16 sm:w-16 sm:text-3xl">
-                {CATEGORY_EMOJIS[category.slug] ?? "🪡"}
+              <div className="relative flex h-14 w-14 items-center justify-center overflow-hidden rounded-full border border-border bg-card text-2xl transition-colors group-hover:border-foreground/40 sm:h-16 sm:w-16 sm:text-3xl">
+                {category.image_url ? (
+                  <Image
+                    src={category.image_url}
+                    alt={category.name}
+                    fill
+                    sizes="64px"
+                    className="object-cover"
+                  />
+                ) : (
+                  CATEGORY_EMOJIS[category.slug] ?? "🪡"
+                )}
               </div>
               <span className="max-w-20 text-center text-xs font-medium text-muted-foreground transition-colors group-hover:text-foreground sm:text-sm">
                 {category.name}
