@@ -9,6 +9,8 @@ import { WHATSAPP_NUMBER } from "@/lib/constants";
 export function WhatsAppFAB() {
   const [visible, setVisible] = useState(false);
 
+  // Delayed entrance so it doesn't compete with the page's own content on
+  // first paint — appears once the visitor has had a moment to look around.
   useEffect(() => {
     const timer = setTimeout(() => setVisible(true), 3000);
     return () => clearTimeout(timer);

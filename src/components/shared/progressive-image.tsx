@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 export function ProgressiveImage({
   className,
   onLoad,
+  alt,
   ...props
 }: ImageProps) {
   const [loaded, setLoaded] = useState(false);
@@ -23,6 +24,7 @@ export function ProgressiveImage({
         <div className="absolute inset-0 animate-pulse bg-muted" />
       )}
       <Image
+        alt={alt}
         className={cn(
           "transition-opacity duration-300",
           loaded ? "opacity-100" : "opacity-0",

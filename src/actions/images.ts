@@ -61,6 +61,8 @@ export async function setPrimaryImage(imageId: string, productId: string) {
 
   const supabase = await createClient();
 
+  // Only one image per product may be primary — clear the old one before
+  // setting the new one so there's never a moment with two (or zero).
   const { error: unsetError } = await supabase
     .from("product_images")
     .update({ is_primary: false })

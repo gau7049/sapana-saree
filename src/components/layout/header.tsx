@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, Search, Heart, User, LogOut } from "lucide-react";
+import { Menu, Search, Heart, User, LogOut, LayoutDashboard } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -33,7 +33,7 @@ const TABLET_NAV_HREFS = ["/sarees", "/categories"];
 
 export function Header() {
   const pathname = usePathname();
-  const { user, loading } = useAuth();
+  const { user, loading, isAdmin } = useAuth();
   const { setMobileNavOpen } = useUIStore();
 
   const tabletLinks = NAV_LINKS.filter((link) =>
@@ -153,6 +153,15 @@ export function Header() {
                 <DropdownMenuItem render={<Link href="/account/reviews" />}>
                   My Reviews
                 </DropdownMenuItem>
+                {isAdmin && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem render={<Link href="/admin" />}>
+                      <LayoutDashboard className="mr-2 h-4 w-4" />
+                      Admin Panel
+                    </DropdownMenuItem>
+                  </>
+                )}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={() => {

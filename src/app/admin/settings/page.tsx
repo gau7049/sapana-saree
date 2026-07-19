@@ -10,11 +10,14 @@ import {
   checkCloudinaryHealth,
   type ServiceHealth,
 } from "@/lib/service-health";
+import { getSiteSettings } from "@/lib/queries/site-settings";
+import { HeroImageUpload } from "@/components/admin/hero-image-upload";
 
 export default async function AdminSettingsPage() {
-  const [brevoHealth, cloudinaryHealth] = await Promise.all([
+  const [brevoHealth, cloudinaryHealth, siteSettings] = await Promise.all([
     checkBrevoHealth(),
     checkCloudinaryHealth(),
+    getSiteSettings(),
   ]);
   return (
     <div>
@@ -45,6 +48,18 @@ export default async function AdminSettingsPage() {
                 (with country code, e.g., 91XXXXXXXXXX)
               </li>
             </ul>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Homepage Hero Image</CardTitle>
+            <CardDescription>
+              Shown at the top of the homepage. Replace the placeholder with a real photo.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <HeroImageUpload initialUrl={siteSettings?.hero_image_url ?? null} />
           </CardContent>
         </Card>
 

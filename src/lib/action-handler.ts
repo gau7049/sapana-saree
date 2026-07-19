@@ -29,6 +29,8 @@ export async function handleAction<T = null>(
 
     return result;
   } catch (error) {
+    // redirect() in a Server Action works by throwing a special error that
+    // Next's router catches — it must propagate, not be treated as a failure.
     if (error instanceof Error && error.message === "NEXT_REDIRECT") {
       throw error;
     }

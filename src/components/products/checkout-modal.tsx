@@ -124,7 +124,6 @@ function CheckoutModalBody({
     return () => {
       cancelled = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step]);
 
   async function handleSignupSubmit(e: React.FormEvent<HTMLFormElement>) {

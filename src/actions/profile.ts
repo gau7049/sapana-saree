@@ -26,6 +26,8 @@ export async function updateProfile(formData: FormData) {
     .update({
       full_name: fullName,
       email,
+      // Changing the email invalidates any prior verification — must be
+      // re-confirmed before it can be used for password recovery again.
       email_verified: emailChanged ? false : user.email_verified,
     })
     .eq("id", user.id);

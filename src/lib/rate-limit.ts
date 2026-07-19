@@ -1,5 +1,9 @@
 import { RATE_LIMIT_MAX, RATE_LIMIT_WINDOW_MS } from "@/lib/constants";
 
+// In-memory, per-instance limiter — fine for a single Node process, but
+// resets on redeploy/restart and won't share state across multiple instances.
+// Good enough here since the app runs as one process; swap for a shared store
+// (e.g. Redis) if that ever changes.
 interface RateLimitEntry {
   count: number;
   resetAt: number;
@@ -32,6 +36,8 @@ export function checkRateLimit(
   const entry = store.get(ip);
 
   if (!entry || now > entry.resetAt) {
+    // Hard cap so an attacker can't grow the Map unbounded with spoofed IPs;
+    // Map preserves insertion order, so this evicts the oldest entry (FIFO).
     if (store.size >= MAX_STORE_SIZE) {
       const oldestKey = store.keys().next().value;
       if (oldestKey) store.delete(oldestKey);

@@ -46,6 +46,13 @@ export interface Category {
   updated_at: string;
 }
 
+export interface SiteSettings {
+  id: number;
+  hero_image_url: string | null;
+  hero_image_public_id: string | null;
+  updated_at: string;
+}
+
 export interface Product {
   id: string;
   title: string;

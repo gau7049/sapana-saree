@@ -6,6 +6,7 @@ import { ProgressiveImage } from "@/components/shared/progressive-image";
 import type { ProductImage } from "@/types";
 
 export function ProductGallery({ images }: { images: ProductImage[] }) {
+  // Primary image always leads, regardless of its stored sort_order.
   const sorted = [...images].sort((a, b) => {
     if (a.is_primary && !b.is_primary) return -1;
     if (!a.is_primary && b.is_primary) return 1;

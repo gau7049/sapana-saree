@@ -7,7 +7,7 @@ import { awardWelcomePoints, attachReferral, ensureReferralCode } from "@/lib/lo
 import { createAdminClient } from "@/lib/supabase/admin";
 import { actionError, actionSuccess } from "@/lib/api/response";
 import { common, auth as msg } from "@/lib/messages";
-import { SITE_URL } from "@/lib/constants";
+import { getServerSiteUrl } from "@/lib/site-url";
 import { normalizeUsername, isValidUsername, synthesizeAuthEmail } from "@/lib/username";
 import { sendPasswordResetEmail } from "@/lib/brevo/send-password-reset";
 import { sendVerificationLinkFor } from "@/lib/email-verification";
@@ -121,11 +121,12 @@ export async function forgotPassword(formData: FormData) {
     return actionError(msg.NO_RECOVERY_EMAIL);
   }
 
+  const siteUrl = await getServerSiteUrl();
   const { data, error } = await admin.auth.admin.generateLink({
     type: "recovery",
     email: synthesizeAuthEmail(username),
     options: {
-      redirectTo: `${SITE_URL}/auth/callback?next=/reset-password`,
+      redirectTo: `${siteUrl}/auth/callback?next=/reset-password`,
     },
   });
 

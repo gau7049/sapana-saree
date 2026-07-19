@@ -7,6 +7,7 @@ import { FeaturedProducts } from "@/components/home/featured-products";
 import { WhatsAppCTA } from "@/components/home/whatsapp-cta";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SITE_NAME, SITE_DESCRIPTION, SITE_URL } from "@/lib/constants";
+import { getSiteSettings } from "@/lib/queries/site-settings";
 
 function ProductsSkeleton() {
   return (
@@ -27,7 +28,8 @@ function ProductsSkeleton() {
   );
 }
 
-export default function HomePage() {
+export default async function HomePage() {
+  const siteSettings = await getSiteSettings();
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Organization",
@@ -42,7 +44,7 @@ export default function HomePage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <HeroSection />
+      <HeroSection imageUrl={siteSettings?.hero_image_url} />
       <Suspense
         fallback={
           <section className="border-b bg-card py-8">

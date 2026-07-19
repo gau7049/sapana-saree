@@ -29,6 +29,7 @@ export async function createCategory(formData: FormData) {
   });
 
   if (error) {
+    // 23505 = Postgres unique-violation (slug/name collision).
     return actionError(
       error.code === "23505" ? "A category with this name already exists." : msg.CREATE_ERROR
     );
@@ -40,6 +41,8 @@ export async function createCategory(formData: FormData) {
   return actionSuccess(msg.CREATED);
 }
 
+// Slug is re-derived from name on every update (not just at creation) so
+// renaming a category keeps its public URL in sync with the display name.
 export async function updateCategory(id: string, formData: FormData) {
   try {
     await requireAdmin();

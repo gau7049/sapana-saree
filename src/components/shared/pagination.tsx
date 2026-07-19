@@ -25,6 +25,9 @@ export function Pagination({
     return `${basePath}?${params.toString()}`;
   }
 
+  // Windowed page list: show every page up to 7; beyond that, always show
+  // first/last plus a sliding window around the current page, with "..."
+  // filling the gaps — keeps the control from growing unbounded wide.
   const pages: (number | "...")[] = [];
   if (totalPages <= 7) {
     for (let i = 1; i <= totalPages; i++) pages.push(i);

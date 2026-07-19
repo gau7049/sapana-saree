@@ -29,6 +29,8 @@ export function ProfileForm({
   const searchParams = useSearchParams();
   const router = useRouter();
 
+  // The verification email link lands back here with ?verified=1 (see
+  // lib/email-verification.ts) — show a toast once, then strip the param.
   useEffect(() => {
     if (searchParams.get("verified") === "1") {
       toast.success("Email verified successfully.");

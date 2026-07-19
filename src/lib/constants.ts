@@ -59,6 +59,8 @@ export const NAV_LINKS = [
   { label: "Contact", href: "/contact" },
 ] as const;
 
+// Read by the middleware (src/proxy.ts) to decide which requests need a
+// session redirect before the route itself ever runs.
 export const PROTECTED_ROUTES = ["/account", "/wishlist"];
 export const ADMIN_ROUTES = ["/admin"];
 export const AUTH_ROUTES = ["/login", "/signup", "/forgot-password", "/reset-password"];

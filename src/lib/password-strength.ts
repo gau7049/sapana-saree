@@ -5,6 +5,8 @@ export interface PasswordStrength {
   label: PasswordStrengthLabel;
 }
 
+// Simple point-based heuristic for the signup form's strength meter — not a
+// real entropy calculation, just enough signal to nudge users off "password1".
 export function getPasswordStrength(password: string): PasswordStrength {
   if (!password) return { score: 0, label: "Weak" };
 

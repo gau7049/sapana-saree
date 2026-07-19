@@ -17,6 +17,7 @@ export function useAuth() {
   const user = useAuthStore((s) => s.user);
   const loading = useAuthStore((s) => s.loading);
   const refresh = useAuthStore((s) => s.refresh);
+  const isAdmin = useAuthStore((s) => s.isAdmin);
 
   useEffect(() => {
     useAuthStore.getState().init();
@@ -26,5 +27,5 @@ export function useAuth() {
     useAuthStore.getState().syncFromSession();
   }, [pathname]);
 
-  return { user, loading, refresh };
+  return { user, loading, refresh, isAdmin };
 }

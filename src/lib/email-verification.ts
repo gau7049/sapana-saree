@@ -1,7 +1,7 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { synthesizeAuthEmail } from "@/lib/username";
 import { sendVerificationEmail } from "@/lib/brevo/send-verification-email";
-import { SITE_URL } from "@/lib/constants";
+import { getServerSiteUrl } from "@/lib/site-url";
 import { createLogger } from "@/lib/logger";
 
 const logger = createLogger("email-verification");
@@ -13,11 +13,15 @@ export async function sendVerificationLinkFor(
 ): Promise<boolean> {
   try {
     const admin = createAdminClient();
+    const siteUrl = await getServerSiteUrl();
+    // "magiclink" is repurposed here as a verification link: generating it
+    // produces a valid, clickable Supabase auth link without emailing
+    // anything itself — sendVerificationEmail below delivers it via Brevo.
     const { data, error } = await admin.auth.admin.generateLink({
       type: "magiclink",
       email: synthesizeAuthEmail(username),
       options: {
-        redirectTo: `${SITE_URL}/auth/callback?next=${encodeURIComponent(redirectPath)}`,
+        redirectTo: `${siteUrl}/auth/callback?next=${encodeURIComponent(redirectPath)}`,
       },
     });
 

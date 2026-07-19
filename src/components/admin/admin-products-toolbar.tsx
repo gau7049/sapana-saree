@@ -43,7 +43,7 @@ export function AdminProductsToolbar({ categories }: { categories: Category[] })
       } else {
         params.delete(key);
       }
-      params.delete("page");
+      params.delete("page"); // any filter change invalidates the current page
       router.push(`${pathname}?${params.toString()}`);
     },
     [router, pathname, searchParams]
@@ -55,6 +55,8 @@ export function AdminProductsToolbar({ categories }: { categories: Category[] })
     };
   }, []);
 
+  // Debounced so every keystroke doesn't push a new URL / trigger a refetch;
+  // the input itself stays uncontrolled-fast via local `search` state.
   function handleSearchChange(value: string) {
     setSearch(value);
     if (debounceRef.current) clearTimeout(debounceRef.current);

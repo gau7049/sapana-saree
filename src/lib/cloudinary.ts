@@ -14,6 +14,9 @@ export async function destroyCloudinaryImage(publicId: string): Promise<boolean>
   const apiSecret = process.env.CLOUDINARY_API_SECRET;
   if (!cloudName || !apiKey || !apiSecret) return false;
 
+  // Cloudinary's signed-upload scheme: sign every param (alphabetical,
+  // excluding the file/api_key) plus the secret, so the request can't be
+  // forged without knowing CLOUDINARY_API_SECRET.
   const timestamp = Math.floor(Date.now() / 1000);
   const paramsToSign = `public_id=${publicId}&timestamp=${timestamp}${apiSecret}`;
   const signature = createHash("sha1").update(paramsToSign).digest("hex");
@@ -34,6 +37,9 @@ export async function destroyCloudinaryImage(publicId: string): Promise<boolean>
   return data.result === "ok" || data.result === "not found";
 }
 
+// Deletes an image regardless of where it was stored — dev/no-Cloudinary
+// uploads land on local disk with a "local/" publicId prefix; everything
+// else went to Cloudinary. Callers don't need to know which.
 export async function cleanupImageFile(publicId: string): Promise<void> {
   if (publicId.startsWith("local/")) {
     const fileName = publicId.slice("local/".length);

@@ -1,6 +1,8 @@
 import { unstable_cache } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
 
+// { count: "exact", head: true } asks Postgres for a row count without
+// transferring any rows — cheap even as the tables grow.
 async function fetchDashboardStats() {
   const supabase = createAdminClient();
 

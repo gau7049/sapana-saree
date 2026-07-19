@@ -1,16 +1,26 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 import { Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
+function subscribe() {
+  return () => {};
+}
+
+// The server always renders "not mounted" (theme is unknown pre-hydration);
+// this flips to true on the client's first render after hydration, without
+// the extra render pass (and hydration-mismatch risk) a useState+useEffect
+// pair would cause.
+function useMounted() {
+  return useSyncExternalStore(subscribe, () => true, () => false);
+}
+
 export function ThemeToggle({ className }: { className?: string }) {
   const { setTheme, resolvedTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => setMounted(true), []);
+  const mounted = useMounted();
 
   if (!mounted) {
     return (

@@ -2,6 +2,9 @@ import { createClient } from "@/lib/supabase/server";
 import { ADMIN_ROLES } from "@/lib/constants";
 import type { Profile } from "@/types";
 
+// requireAuth/requireAdmin throw rather than return null so every call site
+// is forced to handle the unauthorized case (via try/catch) instead of
+// silently continuing with a null profile.
 export async function getCurrentProfile(): Promise<Profile | null> {
   const supabase = await createClient();
   const {

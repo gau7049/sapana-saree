@@ -19,7 +19,7 @@ export function PriceDisplay({
     : 0;
 
   return (
-    <div className={cn("flex items-center gap-2", className)}>
+    <div className={cn("flex flex-wrap items-center gap-x-2 gap-y-0.5", className)}>
       <span className="text-lg font-bold">{formattedPrice}</span>
       {formattedCompare && compareAtPrice && compareAtPrice > price && (
         <>

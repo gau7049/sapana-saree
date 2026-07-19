@@ -11,6 +11,8 @@ export interface CheckoutStatus {
   pointValueInr: number;
 }
 
+// Bundles the profile + loyalty balance the checkout modal needs into one
+// round trip, so it doesn't have to sequence two separate server calls.
 export async function getCheckoutProfileStatus() {
   const profile = await getCurrentProfile();
   const [loyaltyBalance, settings] = await Promise.all([

@@ -31,6 +31,8 @@ export function LoginForm() {
     setError(null);
     const formData = new FormData(e.currentTarget);
     formData.set("redirect", redirectTo);
+    // signIn() redirects (throws) on success, so it only ever resolves here
+    // with a value when it failed.
     const result = await signIn(formData);
     if (result && !result.status) {
       setError(result.message);

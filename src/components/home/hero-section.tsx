@@ -1,12 +1,13 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { motion } from "framer-motion";
 import { buttonVariants } from "@/components/ui/button";
 import { ArrowRight, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export function HeroSection() {
+export function HeroSection({ imageUrl }: { imageUrl?: string | null }) {
   return (
     <section className="bg-secondary/40">
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
@@ -92,18 +93,29 @@ export function HeroSection() {
             transition={{ duration: 0.5, delay: 0.1 }}
             className="hidden lg:col-span-2 lg:block"
           >
-            <div className="relative overflow-hidden border border-border bg-muted">
-              <div className="flex aspect-4/3 flex-col items-center justify-center gap-3 p-8 text-center">
-                <div className="rounded-full border border-border p-4">
-                  <span className="text-4xl">🪡</span>
+            <div className="relative aspect-4/3 overflow-hidden border border-border bg-muted">
+              {imageUrl ? (
+                <Image
+                  src={imageUrl}
+                  alt="Sapana Saree — premium collection"
+                  fill
+                  priority
+                  sizes="(max-width: 1024px) 0px, 40vw"
+                  className="object-cover"
+                />
+              ) : (
+                <div className="flex h-full flex-col items-center justify-center gap-3 p-8 text-center">
+                  <div className="rounded-full border border-border p-4">
+                    <span className="text-4xl">🪡</span>
+                  </div>
+                  <p className="text-sm font-medium text-foreground/70">
+                    Premium Collection
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Replace with your hero image
+                  </p>
                 </div>
-                <p className="text-sm font-medium text-foreground/70">
-                  Premium Collection
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  Replace with your hero image
-                </p>
-              </div>
+              )}
             </div>
           </motion.div>
         </div>

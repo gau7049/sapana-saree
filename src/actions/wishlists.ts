@@ -20,6 +20,7 @@ export async function addToWishlist(productId: string) {
     .insert({ user_id: user.id, product_id: productId });
 
   if (error) {
+    // 23505 = unique-violation — already wishlisted; treat as success (idempotent).
     if (error.code === "23505") return actionSuccess(msg.ALREADY_EXISTS);
     return actionError(common.SOMETHING_WENT_WRONG);
   }

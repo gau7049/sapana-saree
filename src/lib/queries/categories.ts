@@ -48,6 +48,8 @@ export const getCategoryBySlug = cache(async (slug: string) => {
   return data as Category;
 });
 
+// Builds a 2-level parent/subcategory tree from the flat, cached category
+// list — cheap in memory, so no need for a separate recursive DB query.
 export async function getCategoryTree() {
   const categories = await getCategories();
 

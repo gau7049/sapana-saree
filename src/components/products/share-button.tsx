@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { WhatsAppIcon } from "@/components/shared/icons";
 import { buildProductShareUrl } from "@/lib/whatsapp";
 import { logWhatsAppEvent } from "@/actions/whatsapp-log";
-import { SITE_URL } from "@/lib/constants";
+import { useOrigin } from "@/hooks/use-origin";
 
 /**
  * Word-of-mouth is how sarees sell — most purchases start with a share in a
@@ -28,7 +28,9 @@ export function ShareButton({
   referralCode?: string | null;
 }) {
   const [copied, setCopied] = useState(false);
-  const productUrl = `${SITE_URL}/sarees/${slug}${
+  const origin = useOrigin();
+
+  const productUrl = `${origin}/sarees/${slug}${
     referralCode ? `?ref=${encodeURIComponent(referralCode)}` : ""
   }`;
 

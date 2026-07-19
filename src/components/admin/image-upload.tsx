@@ -49,6 +49,8 @@ export function ImageUpload({
 
       setUploading(true);
 
+      // One request per file (not one multi-file request) so a failure on
+      // any single image doesn't block the others from uploading.
       await Promise.all(
         Array.from(files).map(async (file) => {
           const formData = new FormData();
@@ -98,6 +100,8 @@ export function ImageUpload({
     const targetIndex = index + direction;
     if (targetIndex < 0 || targetIndex >= images.length) return;
 
+    // Optimistic swap: update local state immediately, persist sort_order for
+    // every image (indexes shifted for all of them, not just the swapped pair).
     const reordered = [...images];
     [reordered[index], reordered[targetIndex]] = [reordered[targetIndex], reordered[index]];
 

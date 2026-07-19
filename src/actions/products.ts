@@ -145,6 +145,9 @@ export async function archiveProduct(id: string) {
   return actionSuccess(msg.ARCHIVED);
 }
 
+// Shared by single and bulk delete: removes the DB row plus its Cloudinary
+// images, returning the slug (or null if the product didn't exist) so the
+// caller knows which ISR-cached page to revalidate.
 async function deleteProductById(
   supabase: Awaited<ReturnType<typeof createClient>>,
   id: string

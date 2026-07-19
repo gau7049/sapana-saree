@@ -251,15 +251,6 @@ export function ProductForm({ product, categories }: ProductFormProps) {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="color">Color</Label>
-            <Input
-              id="color"
-              name="color"
-              defaultValue={product?.color ?? ""}
-              placeholder="e.g., Red, Blue"
-            />
-          </div>
-          <div className="space-y-2">
             <Label htmlFor="occasion">Occasion</Label>
             <Input
               id="occasion"

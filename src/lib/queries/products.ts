@@ -33,6 +33,9 @@ async function resolveCategoryId(
   return data?.id ?? null;
 }
 
+// Shared filter/sort/paginate logic behind both the public listing (publicOnly)
+// and the admin product table (sees drafts/archived too via filters.status).
+
 async function queryProducts(filters: ProductFilters, publicOnly: boolean) {
   const supabase = await createClient();
   const page = filters.page ?? 1;
@@ -48,6 +51,8 @@ async function queryProducts(filters: ProductFilters, publicOnly: boolean) {
   }
 
   if (filters.category) {
+    // Unknown slug -> filter on a UUID that can never match, so the query
+    // safely returns zero rows instead of accidentally dropping the filter.
     const categoryId = await resolveCategoryId(supabase, filters.category);
     query = query.eq("category_id", categoryId ?? "00000000-0000-0000-0000-000000000000");
   }
@@ -143,6 +148,9 @@ export async function getRelatedProducts(
   return (data ?? []) as ProductWithImages[];
 }
 
+// createStaticClient (no cookies) + unstable_cache below: this runs inside a
+// cache scope, where Next disallows the cookie-aware server client — see
+// lib/supabase/static.ts. Safe here since featured products are public data.
 async function fetchFeaturedProducts() {
   const supabase = createStaticClient();
   const { data, error } = await supabase

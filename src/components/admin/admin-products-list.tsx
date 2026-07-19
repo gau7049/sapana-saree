@@ -30,6 +30,7 @@ const STATUS_STYLE: Record<string, string> = {
 
 export function AdminProductsList({ products }: { products: ProductWithImages[] }) {
   const router = useRouter();
+  // Set (not array) for O(1) has/add/delete on toggle, with no duplicate ids.
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
   const [loading, setLoading] = useState<ProductStatus | "delete" | null>(null);

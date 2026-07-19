@@ -253,7 +253,7 @@ function CategoryRow({
                 >
                   <option value="">None</option>
                   {roots
-                    .filter((c) => c.id !== category.id)
+                    .filter((c) => c.id !== category.id) // can't be its own parent
                     .map((c) => (
                       <option key={c.id} value={c.id}>
                         {c.name}

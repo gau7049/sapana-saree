@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Coins, Copy, Check, Share2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { SITE_URL } from "@/lib/constants";
+import { useOrigin } from "@/hooks/use-origin";
 import type { LoyaltyTransaction } from "@/types";
 
 const TX_LABEL: Record<string, string> = {
@@ -31,8 +31,10 @@ export function LoyaltyCard({
   transactions: LoyaltyTransaction[];
 }) {
   const [copied, setCopied] = useState(false);
+  const origin = useOrigin();
+
   const referralLink = referralCode
-    ? `${SITE_URL}/?ref=${encodeURIComponent(referralCode)}`
+    ? `${origin}/?ref=${encodeURIComponent(referralCode)}`
     : null;
 
   async function copyReferralLink() {

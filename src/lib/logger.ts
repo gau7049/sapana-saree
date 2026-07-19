@@ -1,3 +1,5 @@
+// Structured (JSON) console logging — plain text is fine locally, but a
+// hosting platform's log viewer can filter/search JSON fields by context/level.
 type LogLevel = "info" | "warn" | "error";
 
 interface LogEntry {

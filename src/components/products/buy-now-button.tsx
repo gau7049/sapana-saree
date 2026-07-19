@@ -111,7 +111,6 @@ export function BuyNowButton({
     }
     // One-time mount effect resuming a checkout flow from the magic-link redirect's
     // query marker — not a derived-state sync, so the direct setState here is intentional.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setModalOpen(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

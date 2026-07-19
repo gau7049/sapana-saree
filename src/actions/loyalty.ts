@@ -23,6 +23,8 @@ export async function updateLoyaltySettings(formData: FormData) {
     return actionError(common.FORBIDDEN);
   }
 
+  // Only touch fields present in the form (partial updates from individual
+  // setting cards), and reject anything that isn't a valid non-negative number.
   const updates: Record<string, number> = {};
   for (const field of SETTINGS_FIELDS) {
     const raw = formData.get(field);
@@ -34,6 +36,7 @@ export async function updateLoyaltySettings(formData: FormData) {
     updates[field] = value;
   }
 
+  // Single-row settings table (id is always 1) — see migration 014.
   const admin = createAdminClient();
   const { error } = await admin
     .from("loyalty_settings")

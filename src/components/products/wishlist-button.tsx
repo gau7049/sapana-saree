@@ -64,6 +64,8 @@ export function WishlistButton({
         )}
         {isWishlisted ? "Remove from Wishlist" : "Add to Wishlist"}
       </Button>
+      {/* Completes the original wishlist action right after sign-in, so the
+          user doesn't have to click again. */}
       <SignInModal
         open={signInOpen}
         onOpenChange={setSignInOpen}

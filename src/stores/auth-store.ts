@@ -3,11 +3,23 @@
 import { create } from "zustand";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
+import { ADMIN_ROLES } from "@/lib/constants";
+
+async function fetchIsAdmin(supabase: ReturnType<typeof createClient>, userId: string) {
+  const { data } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", userId)
+    .single();
+  return !!data && ADMIN_ROLES.includes(data.role as (typeof ADMIN_ROLES)[number]);
+}
 
 interface AuthState {
   user: User | null;
   loading: boolean;
   initialized: boolean;
+  /** Whether the signed-in user's profile role is admin/super_admin. */
+  isAdmin: boolean;
   /** One-time bootstrap: fetch the current user and subscribe to auth events. */
   init: () => void;
   /** Re-fetch the authenticated user (network call). Use after sign-in. */
@@ -26,6 +38,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   loading: true,
   initialized: false,
+  isAdmin: false,
 
   init: () => {
     if (get().initialized) return;
@@ -33,19 +46,23 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
     const supabase = createClient();
 
-    supabase.auth.getUser().then(({ data }) => {
-      set({ user: data.user, loading: false });
+    supabase.auth.getUser().then(async ({ data }) => {
+      const isAdmin = data.user ? await fetchIsAdmin(supabase, data.user.id) : false;
+      set({ user: data.user, loading: false, isAdmin });
     });
 
-    supabase.auth.onAuthStateChange((_event, session) => {
-      set({ user: session?.user ?? null, loading: false });
+    supabase.auth.onAuthStateChange(async (_event, session) => {
+      const sessionUser = session?.user ?? null;
+      const isAdmin = sessionUser ? await fetchIsAdmin(supabase, sessionUser.id) : false;
+      set({ user: sessionUser, loading: false, isAdmin });
     });
   },
 
   refresh: async () => {
     const supabase = createClient();
     const { data } = await supabase.auth.getUser();
-    set({ user: data.user, loading: false });
+    const isAdmin = data.user ? await fetchIsAdmin(supabase, data.user.id) : false;
+    set({ user: data.user, loading: false, isAdmin });
     return data.user;
   },
 
@@ -55,11 +72,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     const sessionUser = data.session?.user ?? null;
     // Only write on change to avoid pointless re-renders on every navigation.
     if (sessionUser?.id !== get().user?.id) {
-      set({ user: sessionUser, loading: false });
+      const isAdmin = sessionUser ? await fetchIsAdmin(supabase, sessionUser.id) : false;
+      set({ user: sessionUser, loading: false, isAdmin });
     }
   },
 
-  clear: () => set({ user: null, loading: false }),
+  clear: () => set({ user: null, loading: false, isAdmin: false }),
 }));
 
 // Dev-only debugging handle; stripped from production bundles.

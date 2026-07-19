@@ -35,6 +35,8 @@ export function SignInModal({ open, onOpenChange, onSuccess }: SignInModalProps)
     setError(null);
 
     const formData = new FormData(e.currentTarget);
+    // "stay" tells the signIn action not to redirect() — this modal opens
+    // over whatever page the user was already on, so it just closes in place.
     formData.set("redirect", "stay");
 
     const result = await signIn(formData);
@@ -45,6 +47,8 @@ export function SignInModal({ open, onOpenChange, onSuccess }: SignInModalProps)
       return;
     }
 
+    // signIn() only sets the session cookie server-side; refresh() re-reads
+    // it into the client auth store so the header etc. update immediately.
     const user = await refresh();
     onOpenChange(false);
     if (user) onSuccess?.(user);

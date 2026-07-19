@@ -1,6 +1,7 @@
 import { ImageResponse } from "next/og";
 import { SITE_NAME } from "@/lib/constants";
 
+// ImageResponse (Satori) requires the edge runtime, not Node.
 export const runtime = "edge";
 
 export async function GET(request: Request) {

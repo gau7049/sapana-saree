@@ -5,6 +5,10 @@ import { createLogger } from "@/lib/logger";
 import { common } from "@/lib/messages";
 import { HTTP_STATUS, PROTECTED_ROUTES, ADMIN_ROUTES, AUTH_ROUTES, ADMIN_ROLES } from "@/lib/constants";
 
+// Next.js middleware — runs on every matched request, before any page or API
+// route. Three jobs: rate-limit /api/*, refresh the Supabase session cookie,
+// and redirect unauthenticated/unauthorized visitors away from protected and
+// admin routes. Re-exported as the root middleware.ts (see that file).
 const logger = createLogger("proxy");
 
 async function refreshSession(request: NextRequest) {
@@ -114,6 +118,8 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
+  // UX-level gate only — Row Level Security on the `profiles`/admin-only
+  // tables is what actually enforces this if a request bypasses middleware.
   if (isAdmin && user) {
     const { data: profile } = await supabase
       .from("profiles")
