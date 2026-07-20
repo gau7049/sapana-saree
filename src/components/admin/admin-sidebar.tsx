@@ -66,7 +66,7 @@ function NavLinks({ onClick }: { onClick?: () => void }) {
 
 export function AdminSidebar() {
   return (
-    <aside className="hidden w-64 shrink-0 border-r bg-card lg:block">
+    <aside className="hidden w-64 shrink-0 flex-col border-r bg-card lg:flex">
       <div className="flex h-16 items-center border-b px-6">
         <Link href="/admin" className="text-lg font-bold">
           Admin Panel
@@ -97,12 +97,22 @@ export function AdminMobileNav() {
         <SheetTrigger render={<Button variant="ghost" size="icon" />}>
           <Menu className="h-5 w-5" />
         </SheetTrigger>
-        <SheetContent side="left" className="w-64 p-0">
+        <SheetContent side="left" className="flex w-64 flex-col p-0">
           <div className="flex h-14 items-center border-b px-6">
             <SheetTitle className="text-lg font-bold">{SITE_NAME} Admin</SheetTitle>
           </div>
           <div className="p-4">
             <NavLinks onClick={() => setOpen(false)} />
+          </div>
+          <div className="mt-auto border-t p-4">
+            <Link
+              href="/"
+              onClick={() => setOpen(false)}
+              className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back to Store
+            </Link>
           </div>
         </SheetContent>
       </Sheet>

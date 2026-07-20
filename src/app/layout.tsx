@@ -43,7 +43,7 @@ export default function RootLayout({
       suppressHydrationWarning
       className={`${poppins.variable} ${firaCode.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">
+      <body className="min-h-full flex flex-col overflow-x-hidden">
         <Providers>{children}</Providers>
       </body>
     </html>
