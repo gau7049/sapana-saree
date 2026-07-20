@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import Link from "next/link";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Pagination } from "@/components/shared/pagination";
 import { Mail, MessageCircle } from "lucide-react";
@@ -140,7 +141,7 @@ export default async function AdminMessagesPage({ searchParams }: Props) {
                           "Guest"}
                       </span>
                       <span className="truncate text-muted-foreground">
-                        {log.message.split("\n")[0]}
+                        {log.products?.title ?? log.message.split("\n")[0]}
                       </span>
                     </span>
                     <span className="shrink-0 text-xs text-muted-foreground">
@@ -152,6 +153,18 @@ export default async function AdminMessagesPage({ searchParams }: Props) {
                       })}
                     </span>
                   </summary>
+                  {log.products && (
+                    <p className="mt-2 text-xs">
+                      <span className="text-muted-foreground">Product: </span>
+                      <Link
+                        href={`/sarees/${log.products.slug}`}
+                        target="_blank"
+                        className="font-medium text-primary hover:underline"
+                      >
+                        {log.products.title}
+                      </Link>
+                    </p>
+                  )}
                   <pre className="mt-2 rounded bg-muted p-2 text-xs whitespace-pre-wrap">
                     {log.message}
                   </pre>

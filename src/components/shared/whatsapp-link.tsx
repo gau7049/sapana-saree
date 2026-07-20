@@ -12,12 +12,14 @@ export function WhatsAppLink({
   href,
   kind,
   logMessage,
+  productId,
   className,
   children,
 }: {
   href: string;
   kind: WhatsAppLogKind;
   logMessage: string;
+  productId?: string | null;
   className?: string;
   children: React.ReactNode;
 }) {
@@ -28,7 +30,7 @@ export function WhatsAppLink({
       rel="noopener noreferrer"
       className={className}
       onClick={() => {
-        logWhatsAppEvent(kind, logMessage).catch(() => {});
+        logWhatsAppEvent(kind, logMessage, productId).catch(() => {});
       }}
     >
       {children}

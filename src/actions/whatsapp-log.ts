@@ -21,7 +21,11 @@ const VALID_KINDS: WhatsAppLogKind[] = [
  * receipts (that needs the WhatsApp Business API), so the status recorded is
  * that the link was generated/opened.
  */
-export async function logWhatsAppEvent(kind: WhatsAppLogKind, message: string) {
+export async function logWhatsAppEvent(
+  kind: WhatsAppLogKind,
+  message: string,
+  productId?: string | null
+) {
   if (!VALID_KINDS.includes(kind) || !message) return;
 
   const profile = await getCurrentProfile().catch(() => null);
@@ -29,6 +33,7 @@ export async function logWhatsAppEvent(kind: WhatsAppLogKind, message: string) {
   const admin = createAdminClient();
   const { error } = await admin.from("whatsapp_logs").insert({
     user_id: profile?.id ?? null,
+    product_id: productId ?? null,
     kind,
     message: message.slice(0, 4000),
   });

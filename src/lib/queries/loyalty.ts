@@ -120,6 +120,7 @@ export type AdminWhatsAppLog = {
   status: string;
   created_at: string;
   profiles: { username: string; full_name: string | null } | null;
+  products: { title: string; slug: string } | null;
 };
 
 export interface WhatsAppLogFilters {
@@ -151,7 +152,7 @@ export async function getWhatsAppLogs(
 
   let query = supabase
     .from("whatsapp_logs")
-    .select("*, profiles(username, full_name)", { count: "exact" });
+    .select("*, profiles(username, full_name), products(title, slug)", { count: "exact" });
 
   if (filters.search?.trim()) {
     query = query.ilike("message", `%${filters.search.trim().replace(/[%_]/g, "")}%`);

@@ -159,6 +159,7 @@ export default async function ProductDetailPage({ params }: Props) {
                 title={product.title}
                 price={product.price}
                 slug={product.slug}
+                productId={product.id}
                 referralCode={profile?.referral_code ?? null}
               />
               <OrderTerms />

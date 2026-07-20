@@ -174,6 +174,7 @@ export type WhatsAppLogKind =
 export interface WhatsAppLog {
   id: string;
   user_id: string | null;
+  product_id: string | null;
   kind: WhatsAppLogKind;
   message: string;
   status: string;

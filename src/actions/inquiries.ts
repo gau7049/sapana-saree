@@ -67,6 +67,7 @@ export async function createInquiry(
   // Audit trail of system-generated WhatsApp messages.
   await admin.from("whatsapp_logs").insert({
     user_id: user.id,
+    product_id: productId,
     kind: "order",
     message: whatsappMessage,
   });

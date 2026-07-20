@@ -20,11 +20,13 @@ export function ShareButton({
   title,
   price,
   slug,
+  productId,
   referralCode = null,
 }: {
   title: string;
   price: number;
   slug: string;
+  productId: string;
   referralCode?: string | null;
 }) {
   const [copied, setCopied] = useState(false);
@@ -41,7 +43,8 @@ export function ShareButton({
   function logShare() {
     logWhatsAppEvent(
       "share",
-      `${title} — ₹${price.toLocaleString("en-IN")} — ${productUrl}`
+      `${title} — ₹${price.toLocaleString("en-IN")} — ${productUrl}`,
+      productId
     ).catch(() => {});
   }
 

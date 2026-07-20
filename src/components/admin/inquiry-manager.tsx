@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
+import { ProgressiveImage } from "@/components/shared/progressive-image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -42,7 +44,24 @@ interface InquiryRow {
     postal_code: string | null;
     loyalty_transactions?: { points: number }[];
   } | null;
-  products: { title: string; slug: string; price: number } | null;
+  products: {
+    title: string;
+    slug: string;
+    price: number;
+    product_images?: { url: string; is_primary: boolean; sort_order: number }[];
+  } | null;
+}
+
+function productThumbnail(
+  images: { url: string; is_primary: boolean; sort_order: number }[] | undefined
+) {
+  if (!images || images.length === 0) return null;
+  const sorted = [...images].sort((a, b) => {
+    if (a.is_primary && !b.is_primary) return -1;
+    if (!a.is_primary && b.is_primary) return 1;
+    return a.sort_order - b.sort_order;
+  });
+  return sorted[0].url;
 }
 
 const STATUS_STYLE: Record<string, string> = {
@@ -107,22 +126,47 @@ export function InquiryManager({ inquiries }: { inquiries: InquiryRow[] }) {
     <div className="space-y-3">
       {inquiries.map((inquiry) => (
         <div key={inquiry.id} className="rounded-lg border bg-card p-4">
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="font-medium">
-                {inquiry.products?.title ?? "Unknown product"}
-              </p>
-              <p className="mt-0.5 text-sm text-muted-foreground">
-                ₹{Number(inquiry.products?.price ?? 0).toLocaleString("en-IN")}
-                {inquiry.payment_method && (
-                  <span>
-                    {" · "}
-                    {inquiry.payment_method === "cod"
-                      ? `COD (+₹${COD_CHARGE})`
-                      : "Online payment"}
-                  </span>
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-start gap-3">
+              {inquiry.products &&
+                (() => {
+                  const thumbnail = productThumbnail(inquiry.products?.product_images);
+                  return thumbnail ? (
+                    <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-md border bg-muted">
+                      <ProgressiveImage
+                        src={thumbnail}
+                        alt={inquiry.products.title}
+                        fill
+                        sizes="56px"
+                        className="object-cover"
+                      />
+                    </div>
+                  ) : null;
+                })()}
+              <div>
+                {inquiry.products ? (
+                  <Link
+                    href={`/sarees/${inquiry.products.slug}`}
+                    target="_blank"
+                    className="font-medium hover:text-primary hover:underline"
+                  >
+                    {inquiry.products.title}
+                  </Link>
+                ) : (
+                  <p className="font-medium text-muted-foreground">Unknown product</p>
                 )}
-              </p>
+                <p className="mt-0.5 text-sm text-muted-foreground">
+                  ₹{Number(inquiry.products?.price ?? 0).toLocaleString("en-IN")}
+                  {inquiry.payment_method && (
+                    <span>
+                      {" · "}
+                      {inquiry.payment_method === "cod"
+                        ? `COD (+₹${COD_CHARGE})`
+                        : "Online payment"}
+                    </span>
+                  )}
+                </p>
+              </div>
             </div>
             <Badge
               variant="secondary"
