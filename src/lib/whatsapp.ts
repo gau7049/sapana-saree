@@ -12,7 +12,7 @@ export interface WhatsAppAddress {
 
 export interface WhatsAppInquiry {
   productTitle: string;
-  productId: string;
+  productUrl: string;
   category: string;
   price: number;
   userName: string;
@@ -30,7 +30,7 @@ export function buildWhatsAppMessage(inquiry: WhatsAppInquiry): string {
     `Product: ${inquiry.productTitle}`,
     `Category: ${inquiry.category}`,
     `Price: ₹${inquiry.price.toLocaleString("en-IN")}`,
-    `Product ID: ${inquiry.productId}`,
+    `Link: ${inquiry.productUrl}`,
     "",
     `My Name: ${inquiry.userName}`,
     inquiry.userPhone ? `My Phone: ${inquiry.userPhone}` : "",
@@ -56,7 +56,7 @@ export function buildWhatsAppMessage(inquiry: WhatsAppInquiry): string {
           "",
           `Payment: ${
             inquiry.paymentMethod === "cod"
-              ? `Cash on Delivery (+₹${COD_CHARGE} handling charge)`
+              ? `Cash on Delivery (+₹${COD_CHARGE} handling charge, collected upfront)`
               : "Online payment (UPI / bank transfer)"
           }`,
           // The customer sends the terms in their own opening message — this is

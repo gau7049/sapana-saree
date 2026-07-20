@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { createLogger } from "@/lib/logger";
+import { MESSAGES_PER_PAGE } from "@/lib/constants";
 import type { LoyaltyTransaction, ReferralStatus } from "@/types";
 
 const logger = createLogger("queries:loyalty");
@@ -121,17 +122,62 @@ export type AdminWhatsAppLog = {
   profiles: { username: string; full_name: string | null } | null;
 };
 
-export async function getWhatsAppLogs(limit = 100): Promise<AdminWhatsAppLog[]> {
+export interface WhatsAppLogFilters {
+  search?: string;
+  kind?: string;
+  from?: string;
+  to?: string;
+  page?: number;
+}
+
+export interface WhatsAppLogsResult {
+  logs: AdminWhatsAppLog[];
+  total: number;
+  totalPages: number;
+}
+
+/**
+ * Search matches the logged message text — for order/unboxing logs that
+ * already includes the customer's name and product, so it doubles as a
+ * per-customer filter without needing a fragile cross-table OR filter.
+ */
+export async function getWhatsAppLogs(
+  filters: WhatsAppLogFilters = {}
+): Promise<WhatsAppLogsResult> {
   const supabase = await createClient();
-  const { data, error } = await supabase
+  const page = filters.page ?? 1;
+  const from = (page - 1) * MESSAGES_PER_PAGE;
+  const to = from + MESSAGES_PER_PAGE - 1;
+
+  let query = supabase
     .from("whatsapp_logs")
-    .select("*, profiles(username, full_name)")
+    .select("*, profiles(username, full_name)", { count: "exact" });
+
+  if (filters.search?.trim()) {
+    query = query.ilike("message", `%${filters.search.trim().replace(/[%_]/g, "")}%`);
+  }
+  if (filters.kind) query = query.eq("kind", filters.kind);
+  if (filters.from) query = query.gte("created_at", filters.from);
+  if (filters.to) {
+    // Treat the "to" date as inclusive of the whole day.
+    const inclusiveEnd = new Date(filters.to);
+    inclusiveEnd.setDate(inclusiveEnd.getDate() + 1);
+    query = query.lt("created_at", inclusiveEnd.toISOString().slice(0, 10));
+  }
+
+  const { data, count, error } = await query
     .order("created_at", { ascending: false })
-    .limit(limit);
+    .range(from, to);
 
   if (error) {
     logger.error("getWhatsAppLogs failed", { error: error.message });
-    return [];
+    return { logs: [], total: 0, totalPages: 0 };
   }
-  return (data ?? []) as AdminWhatsAppLog[];
+
+  const total = count ?? 0;
+  return {
+    logs: (data ?? []) as AdminWhatsAppLog[],
+    total,
+    totalPages: Math.max(1, Math.ceil(total / MESSAGES_PER_PAGE)),
+  };
 }

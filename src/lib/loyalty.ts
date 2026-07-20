@@ -313,6 +313,25 @@ export async function refundRedemption(
   });
 }
 
+/**
+ * Manual admin correction — the only way an "adjustment" transaction is
+ * created. `points` can be positive (add) or negative (subtract); the caller
+ * (the adjustUserPoints action) is responsible for admin authorization.
+ */
+export async function adjustLoyaltyPoints(
+  userId: string,
+  points: number,
+  note?: string
+): Promise<boolean> {
+  if (points === 0) return true;
+  return addTransaction({
+    userId,
+    points,
+    type: "adjustment",
+    note: note?.trim() || "Manual adjustment by admin",
+  });
+}
+
 const REFERRAL_CODE_PREFIX = "SAP";
 
 function generateReferralCode(): string {

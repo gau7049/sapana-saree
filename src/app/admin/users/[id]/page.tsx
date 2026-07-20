@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/shared/empty-state";
 import { AdminUserActions } from "@/components/admin/admin-user-actions";
+import { AdminPointsAdjust } from "@/components/admin/admin-points-adjust";
 import { Coins, Package } from "lucide-react";
 import { getAdminUserDetail } from "@/lib/queries/users";
 
@@ -123,9 +124,12 @@ export default async function AdminUserDetailPage({ params }: Props) {
         </Card>
 
         <Card>
-          <CardHeader>
-            <CardTitle>Loyalty points</CardTitle>
-            <CardDescription>Current balance: {pointsBalance} points</CardDescription>
+          <CardHeader className="flex-row items-start justify-between gap-3 space-y-0">
+            <div>
+              <CardTitle>Loyalty points</CardTitle>
+              <CardDescription>Current balance: {pointsBalance} points</CardDescription>
+            </div>
+            <AdminPointsAdjust userId={profile.id} pointsBalance={pointsBalance} />
           </CardHeader>
           <CardContent>
             {transactions.length === 0 ? (

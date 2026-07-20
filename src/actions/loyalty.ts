@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { adjustLoyaltyPoints } from "@/lib/loyalty";
 import { actionError, actionSuccess } from "@/lib/api/response";
 import { common } from "@/lib/messages";
 import { requireAdmin } from "@/lib/auth-guard";
@@ -47,4 +48,27 @@ export async function updateLoyaltySettings(formData: FormData) {
 
   revalidatePath("/admin/loyalty");
   return actionSuccess("Loyalty settings updated.");
+}
+
+// Full admin control over a customer's balance: positive points add, negative
+// points subtract (a "zero out" action just passes -currentBalance).
+export async function adjustUserPoints(userId: string, points: number, note?: string) {
+  try {
+    await requireAdmin();
+  } catch {
+    return actionError(common.FORBIDDEN);
+  }
+
+  if (!Number.isInteger(points) || points === 0) {
+    return actionError(common.MISSING_REQUIRED_FIELDS);
+  }
+
+  const ok = await adjustLoyaltyPoints(userId, points, note);
+  if (!ok) return actionError(common.SOMETHING_WENT_WRONG);
+
+  revalidatePath(`/admin/users/${userId}`);
+  revalidatePath("/admin/loyalty");
+  return actionSuccess(
+    points > 0 ? `Added ${points} points.` : `Removed ${Math.abs(points)} points.`
+  );
 }

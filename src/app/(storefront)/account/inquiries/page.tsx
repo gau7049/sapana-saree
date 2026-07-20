@@ -172,7 +172,7 @@ export default async function AccountInquiriesPage() {
             {showUnboxingReminder && (
               <div className="mt-3 flex items-start gap-2 rounded-lg border border-amber-300/60 bg-amber-50 p-3 text-sm dark:border-amber-700/60 dark:bg-amber-950/40">
                 <Video className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-500" />
-                <div>
+                <div className="min-w-0">
                   <p className="font-medium text-amber-900 dark:text-amber-200">
                     Before opening your package
                   </p>
@@ -193,10 +193,10 @@ export default async function AccountInquiriesPage() {
                     logMessage={`Unboxing video for: ${inquiry.products?.title ?? "order"}`}
                     className={cn(
                       buttonVariants({ variant: "outline", size: "sm" }),
-                      "mt-2"
+                      "mt-2 h-auto max-w-full items-start py-1.5 text-left whitespace-normal"
                     )}
                   >
-                    <Video className="mr-1.5 h-3.5 w-3.5" />
+                    <Video className="mt-0.5 mr-1.5 h-3.5 w-3.5 shrink-0" />
                     Send unboxing video on WhatsApp
                   </WhatsAppLink>
                 </div>

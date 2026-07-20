@@ -117,7 +117,7 @@ export function PaymentChoice({
               </span>
             </span>
             <span className="block text-xs text-muted-foreground">
-              Pay when the saree arrives
+              ₹{COD_CHARGE} handling charge collected upfront; rest paid on delivery
             </span>
           </span>
         </button>

@@ -12,7 +12,7 @@ export const DELIVERY_ESTIMATE = "7–10 days";
 export const COD_CHARGE = 150;
 export const ORDER_TERMS = [
   `Delivery in ${DELIVERY_ESTIMATE} across India`,
-  `Cash on Delivery available (+₹${COD_CHARGE} handling charge)`,
+  `Cash on Delivery available (+₹${COD_CHARGE} handling charge, collected upfront)`,
   "No returns or exchanges — please review details and ask questions before ordering",
   "An uncut, unpaused unboxing video is required for any damage or wrong-item claim",
 ] as const;
@@ -29,6 +29,7 @@ export const ALLOWED_IMAGE_TYPES = [
 export const PRODUCTS_PER_PAGE = 12;
 export const REVIEWS_PER_PAGE = 10;
 export const USERS_PER_PAGE = 20;
+export const MESSAGES_PER_PAGE = 20;
 export const DEFAULT_PAGE = 1;
 
 export const ADMIN_ROLES = ["admin", "super_admin"] as const;

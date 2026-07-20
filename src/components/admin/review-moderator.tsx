@@ -1,10 +1,11 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { StarRating } from "@/components/shared/star-rating";
-import { Check, X, Trash2 } from "lucide-react";
+import { Check, X, Trash2, Loader2 } from "lucide-react";
 import { moderateReview, deleteReview } from "@/actions/reviews";
 import { handleAction } from "@/lib/action-handler";
 
@@ -27,18 +28,25 @@ const STATUS_STYLE: Record<string, string> = {
 
 export function ReviewModerator({ reviews }: { reviews: ReviewRow[] }) {
   const router = useRouter();
+  // Keyed by `${reviewId}:${action}` so only the clicked icon spins while
+  // the other two on that same row stay disabled but not spinning.
+  const [loading, setLoading] = useState<string | null>(null);
 
   async function handleModerate(id: string, status: "approved" | "rejected") {
+    setLoading(`${id}:${status}`);
     await handleAction(moderateReview(id, status), {
       onSuccess: () => router.refresh(),
     });
+    setLoading(null);
   }
 
   async function handleDelete(id: string) {
     if (!confirm("Delete this review?")) return;
+    setLoading(`${id}:delete`);
     await handleAction(deleteReview(id), {
       onSuccess: () => router.refresh(),
     });
+    setLoading(null);
   }
 
   return (
@@ -70,17 +78,27 @@ export function ReviewModerator({ reviews }: { reviews: ReviewRow[] }) {
                     variant="ghost"
                     size="icon-xs"
                     onClick={() => handleModerate(review.id, "approved")}
+                    disabled={loading !== null}
                     title="Approve"
                   >
-                    <Check className="h-3.5 w-3.5 text-green-600" />
+                    {loading === `${review.id}:approved` ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Check className="h-3.5 w-3.5 text-green-600" />
+                    )}
                   </Button>
                   <Button
                     variant="ghost"
                     size="icon-xs"
                     onClick={() => handleModerate(review.id, "rejected")}
+                    disabled={loading !== null}
                     title="Reject"
                   >
-                    <X className="h-3.5 w-3.5 text-red-600" />
+                    {loading === `${review.id}:rejected` ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <X className="h-3.5 w-3.5 text-red-600" />
+                    )}
                   </Button>
                 </>
               )}
@@ -88,9 +106,14 @@ export function ReviewModerator({ reviews }: { reviews: ReviewRow[] }) {
                 variant="ghost"
                 size="icon-xs"
                 onClick={() => handleDelete(review.id)}
+                disabled={loading !== null}
                 title="Delete"
               >
-                <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                {loading === `${review.id}:delete` ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                )}
               </Button>
             </div>
           </div>

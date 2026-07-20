@@ -12,7 +12,7 @@ export const metadata = createMetadata({
 const TIMELINE_STEPS = ["Order Started", "Confirmed", "Shipped", "Delivered"];
 
 const SUMMARY_CHIPS = [
-  `COD charge: ₹${COD_CHARGE} extra`,
+  `COD charge: ₹${COD_CHARGE} extra (collected upfront)`,
   "No returns / exchanges",
   "Unboxing video required for damage claims",
 ];
@@ -31,7 +31,7 @@ const SECTIONS = [
     title: "Payment",
     body: [
       "We accept online payment (UPI or bank transfer — details are shared on WhatsApp when you order).",
-      `Cash on Delivery is available with an additional ₹${COD_CHARGE} handling charge, payable with the order amount.`,
+      `Cash on Delivery is available too — the ₹${COD_CHARGE} handling charge is collected upfront (online, before dispatch), while the rest of the order amount is paid in cash on delivery.`,
     ],
   },
   {
@@ -60,7 +60,7 @@ const FAQ_ITEMS = [
   },
   {
     question: "Is Cash on Delivery available?",
-    answer: `Yes — Cash on Delivery is available with an additional ₹${COD_CHARGE} handling charge, payable along with the order amount. Online payment (UPI/bank transfer) is also accepted.`,
+    answer: `Yes — the ₹${COD_CHARGE} handling charge is collected upfront (online, before your order ships), and the remaining order amount is paid in cash on delivery. Online payment (UPI/bank transfer) for the full amount is also accepted.`,
   },
   {
     question: "Can I return a saree?",

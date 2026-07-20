@@ -71,11 +71,16 @@ export function InquiryManager({ inquiries }: { inquiries: InquiryRow[] }) {
   const router = useRouter();
   const [shipTarget, setShipTarget] = useState<InquiryRow | null>(null);
   const [shipping, setShipping] = useState(false);
+  // Keyed by inquiry id so only the row being changed shows a spinner —
+  // other rows stay interactive while this one's request is in flight.
+  const [statusLoading, setStatusLoading] = useState<string | null>(null);
 
   async function handleStatusChange(id: string, status: InquiryStatus) {
+    setStatusLoading(id);
     await handleAction(updateInquiryStatus(id, status), {
       onSuccess: () => router.refresh(),
     });
+    setStatusLoading(null);
   }
 
   async function handleShip(e: React.FormEvent<HTMLFormElement>) {
@@ -205,7 +210,8 @@ export function InquiryManager({ inquiries }: { inquiries: InquiryRow[] }) {
             {inquiry.status === "responded" && (
               <button
                 onClick={() => setShipTarget(inquiry)}
-                className="rounded-md bg-primary px-3 py-1 text-xs font-medium text-primary-foreground hover:bg-primary/90"
+                disabled={statusLoading === inquiry.id}
+                className="rounded-md bg-primary px-3 py-1 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Mark as shipped
               </button>
@@ -215,16 +221,24 @@ export function InquiryManager({ inquiries }: { inquiries: InquiryRow[] }) {
                 onClick={() =>
                   handleStatusChange(inquiry.id, NEXT_STATUS[inquiry.status])
                 }
-                className="rounded-md bg-primary px-3 py-1 text-xs font-medium text-primary-foreground hover:bg-primary/90"
+                disabled={statusLoading === inquiry.id}
+                className="flex items-center gap-1.5 rounded-md bg-primary px-3 py-1 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
               >
+                {statusLoading === inquiry.id && (
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                )}
                 Mark as {NEXT_STATUS[inquiry.status]}
               </button>
             )}
             {CANCELLABLE.has(inquiry.status) && (
               <button
                 onClick={() => handleStatusChange(inquiry.id, "cancelled")}
-                className="rounded-md border px-3 py-1 text-xs font-medium text-destructive hover:bg-destructive/10"
+                disabled={statusLoading === inquiry.id}
+                className="flex items-center gap-1.5 rounded-md border px-3 py-1 text-xs font-medium text-destructive hover:bg-destructive/10 disabled:cursor-not-allowed disabled:opacity-50"
               >
+                {statusLoading === inquiry.id && (
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                )}
                 Cancel
               </button>
             )}

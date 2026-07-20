@@ -14,6 +14,13 @@ function safeRedirectPath(url: string | null): string {
   return url;
 }
 
+// Marks the destination so the onboarding tour fires once for brand-new
+// accounts created through the standalone /signup page — never for accounts
+// created mid-checkout (those pass redirect="stay" and never reach here).
+function withWelcomeMarker(path: string): string {
+  return `${path}${path.includes("?") ? "&" : "?"}welcome=1`;
+}
+
 export async function signUp(formData: FormData) {
   const ip = await getClientIp();
   if (!checkRateLimit(`auth:signup:${ip}`, 5, 60_000).allowed) {
@@ -68,7 +75,9 @@ export async function signUp(formData: FormData) {
 
   if (data.session) {
     const redirectField = formData.get("redirect") as string | null;
-    if (redirectField !== "stay") redirect(safeRedirectPath(redirectField));
+    if (redirectField !== "stay") {
+      redirect(withWelcomeMarker(safeRedirectPath(redirectField)));
+    }
   }
 
   return actionSuccess(msg.SIGNUP_SUCCESS);

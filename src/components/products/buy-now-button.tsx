@@ -1,20 +1,24 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  DialogClose,
 } from "@/components/ui/dialog";
-import { MessageCircle } from "lucide-react";
+import { MessageCircle, CheckCircle2 } from "lucide-react";
 import { buildWhatsAppUrl, buildWhatsAppMessage, type WhatsAppInquiry } from "@/lib/whatsapp";
-import { toast } from "sonner";
 import { createInquiry } from "@/actions/inquiries";
 import { isReadyForCheckout, hasSavedAddress } from "@/lib/profile-helpers";
 import { CheckoutModal } from "@/components/products/checkout-modal";
+import { useOrigin } from "@/hooks/use-origin";
 import {
   PaymentChoice,
   type LoyaltyRedeemInfo,
@@ -23,6 +27,7 @@ import type { ProductWithImages, Profile, PaymentMethod } from "@/types";
 
 function buildInquiryDetails(
   product: ProductWithImages,
+  origin: string,
   profile: Profile,
   paymentMethod: PaymentMethod,
   pointsRedeemed: number,
@@ -30,7 +35,7 @@ function buildInquiryDetails(
 ): WhatsAppInquiry {
   return {
     productTitle: product.title,
-    productId: product.id,
+    productUrl: `${origin}/sarees/${product.slug}`,
     category: product.categories?.name ?? "Uncategorized",
     price: product.price,
     userName: profile.full_name ?? profile.username,
@@ -62,7 +67,9 @@ export function BuyNowButton({
 }) {
   const [modalOpen, setModalOpen] = useState(false);
   const [paymentOpen, setPaymentOpen] = useState(false);
+  const [orderPlacedOpen, setOrderPlacedOpen] = useState(false);
   const router = useRouter();
+  const origin = useOrigin();
 
   function fireWhatsApp(
     p: Profile,
@@ -72,6 +79,7 @@ export function BuyNowButton({
   ) {
     const details = buildInquiryDetails(
       product,
+      origin,
       p,
       paymentMethod,
       pointsRedeemed,
@@ -86,7 +94,7 @@ export function BuyNowButton({
       pointsRedeemed
     ).catch(() => {});
     window.open(buildWhatsAppUrl(details), "_blank");
-    toast.success("Opening WhatsApp...");
+    setOrderPlacedOpen(true);
   }
 
   function handleBuyNow() {
@@ -136,6 +144,37 @@ export function BuyNowButton({
           router.refresh();
         }}
       />
+
+      <Dialog open={orderPlacedOpen} onOpenChange={setOrderPlacedOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-green-100 dark:bg-green-900">
+              <CheckCircle2 className="h-6 w-6 text-green-600 dark:text-green-400" />
+            </div>
+            <DialogTitle className="text-center">Order request sent!</DialogTitle>
+            <DialogDescription className="text-center">
+              We&apos;ve opened WhatsApp with your order details. Once you send
+              that message, you can track its status anytime under{" "}
+              <span className="font-medium text-foreground">
+                Account → Inquiries
+              </span>
+              .
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="sm:justify-center">
+            <DialogClose render={<Button variant="outline" />}>
+              Got it
+            </DialogClose>
+            <Link
+              href="/account/inquiries"
+              className={buttonVariants()}
+              onClick={() => setOrderPlacedOpen(false)}
+            >
+              Track my orders
+            </Link>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

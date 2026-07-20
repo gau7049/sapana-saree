@@ -1,6 +1,9 @@
+import { Suspense } from "react";
 import { EmptyState } from "@/components/shared/empty-state";
+import { Pagination } from "@/components/shared/pagination";
 import { Mail, MessageCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { AdminMessagesToolbar } from "@/components/admin/admin-messages-toolbar";
 import { getAdminMessages } from "@/lib/queries/messages";
 import { getWhatsAppLogs } from "@/lib/queries/loyalty";
 
@@ -12,10 +15,23 @@ const WHATSAPP_KIND_LABEL: Record<string, string> = {
   support: "Support",
 };
 
-export default async function AdminMessagesPage() {
-  const [messages, whatsappLogs] = await Promise.all([
+interface Props {
+  searchParams: Promise<Record<string, string | undefined>>;
+}
+
+export default async function AdminMessagesPage({ searchParams }: Props) {
+  const params = await searchParams;
+  const page = Number(params.page) || 1;
+
+  const [messages, { logs: whatsappLogs, total, totalPages }] = await Promise.all([
     getAdminMessages(),
-    getWhatsAppLogs(),
+    getWhatsAppLogs({
+      search: params.search,
+      kind: params.kind,
+      from: params.from,
+      to: params.to,
+      page,
+    }),
   ]);
 
   return (
@@ -83,12 +99,31 @@ export default async function AdminMessagesPage() {
           recorded status is that the message link was generated — delivery
           confirmation would require the WhatsApp Business API.
         </p>
+
         <div className="mt-4">
+          <Suspense>
+            <AdminMessagesToolbar />
+          </Suspense>
+        </div>
+
+        <p className="mt-3 text-xs text-muted-foreground">
+          {total} {total === 1 ? "message" : "messages"}
+        </p>
+
+        <div className="mt-2">
           {whatsappLogs.length === 0 ? (
             <EmptyState
               icon={MessageCircle}
-              title="No WhatsApp messages logged yet"
-              description="Messages appear here when customers start orders or share products."
+              title={
+                params.search || params.kind || params.from || params.to
+                  ? "No matching messages"
+                  : "No WhatsApp messages logged yet"
+              }
+              description={
+                params.search || params.kind || params.from || params.to
+                  ? "Try adjusting your search or filters."
+                  : "Messages appear here when customers start orders or share products."
+              }
             />
           ) : (
             <div className="space-y-2">
@@ -127,6 +162,12 @@ export default async function AdminMessagesPage() {
               ))}
             </div>
           )}
+        </div>
+
+        <div className="mt-6">
+          <Suspense>
+            <Pagination currentPage={page} totalPages={totalPages} basePath="/admin/messages" />
+          </Suspense>
         </div>
       </div>
     </div>

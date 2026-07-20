@@ -1,9 +1,11 @@
 "use client";
 
+import { Suspense } from "react";
 import { ThemeProvider } from "next-themes";
 import NextTopLoader from "nextjs-toploader";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { OnboardingTour } from "@/components/layout/onboarding-tour";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
@@ -22,6 +24,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
       <TooltipProvider>
         {children}
         <Toaster richColors position="top-right" />
+        <Suspense fallback={null}>
+          <OnboardingTour />
+        </Suspense>
       </TooltipProvider>
     </ThemeProvider>
   );

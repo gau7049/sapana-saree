@@ -118,6 +118,7 @@ export function Header() {
           {!loading && user && (
             <Link
               href="/wishlist"
+              data-tour="wishlist"
               className={cn(buttonVariants({ variant: "ghost", size: "icon" }), ICON_BUTTON, "inline-flex")}
               aria-label="Wishlist"
             >
@@ -137,6 +138,7 @@ export function Header() {
                     variant="ghost"
                     size="icon"
                     aria-label="Account menu"
+                    data-tour="account-menu"
                     className={ICON_BUTTON}
                   />
                 }
