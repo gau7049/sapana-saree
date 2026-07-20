@@ -7,6 +7,7 @@ import { getLoyaltyBalance, getLoyaltySettings } from "@/lib/loyalty";
 import { isProductWishlisted } from "@/lib/queries/wishlists";
 import { getCurrentProfile } from "@/lib/auth-guard";
 import { ProductGallery } from "@/components/products/product-gallery";
+import { SelectedImageProvider } from "@/components/products/selected-image-context";
 import { ProductInfo } from "@/components/products/product-info";
 import { BuyNowButton } from "@/components/products/buy-now-button";
 import { WishlistButton } from "@/components/products/wishlist-button";
@@ -144,24 +145,26 @@ export default async function ProductDetailPage({ params }: Props) {
           </BreadcrumbList>
         </Breadcrumb>
 
-        <div className="mt-8 grid grid-cols-1 gap-10 lg:grid-cols-2">
-          <ProductGallery images={product.product_images ?? []} />
+        <SelectedImageProvider>
+          <div className="mt-8 grid grid-cols-1 gap-10 lg:grid-cols-2">
+            <ProductGallery images={product.product_images ?? []} />
 
-          <div className="space-y-4">
-            <ProductInfo product={product} />
-            <Suspense fallback={null}>
-              <BuyNowButton product={product} profile={profile} loyalty={loyalty} />
-            </Suspense>
-            <WishlistButton productId={product.id} initialWishlisted={wishlisted} />
-            <ShareButton
-              title={product.title}
-              price={product.price}
-              slug={product.slug}
-              referralCode={profile?.referral_code ?? null}
-            />
-            <OrderTerms />
+            <div className="space-y-4">
+              <ProductInfo product={product} />
+              <Suspense fallback={null}>
+                <BuyNowButton product={product} profile={profile} loyalty={loyalty} />
+              </Suspense>
+              <WishlistButton productId={product.id} initialWishlisted={wishlisted} />
+              <ShareButton
+                title={product.title}
+                price={product.price}
+                slug={product.slug}
+                referralCode={profile?.referral_code ?? null}
+              />
+              <OrderTerms />
+            </div>
           </div>
-        </div>
+        </SelectedImageProvider>
 
         <Separator className="my-12" />
 

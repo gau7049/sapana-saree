@@ -18,6 +18,7 @@ import { buildWhatsAppUrl, buildWhatsAppMessage, type WhatsAppInquiry } from "@/
 import { createInquiry } from "@/actions/inquiries";
 import { isReadyForCheckout, hasSavedAddress } from "@/lib/profile-helpers";
 import { CheckoutModal } from "@/components/products/checkout-modal";
+import { useSelectedImage } from "@/components/products/selected-image-context";
 import { useOrigin } from "@/hooks/use-origin";
 import {
   PaymentChoice,
@@ -31,7 +32,8 @@ function buildInquiryDetails(
   profile: Profile,
   paymentMethod: PaymentMethod,
   pointsRedeemed: number,
-  pointValueInr: number
+  pointValueInr: number,
+  selectedVariant?: string
 ): WhatsAppInquiry {
   return {
     productTitle: product.title,
@@ -40,6 +42,7 @@ function buildInquiryDetails(
     price: product.price,
     userName: profile.full_name ?? profile.username,
     userPhone: profile.phone ?? undefined,
+    selectedVariant,
     paymentMethod,
     pointsRedeemed,
     pointValueInr,
@@ -70,6 +73,7 @@ export function BuyNowButton({
   const [orderPlacedOpen, setOrderPlacedOpen] = useState(false);
   const router = useRouter();
   const origin = useOrigin();
+  const { index, total, label } = useSelectedImage();
 
   function fireWhatsApp(
     p: Profile,
@@ -77,13 +81,16 @@ export function BuyNowButton({
     pointsRedeemed: number,
     pointValueInr: number
   ) {
+    const selectedVariant =
+      total > 1 ? `Image ${index + 1} of ${total}${label ? ` (${label})` : ""}` : undefined;
     const details = buildInquiryDetails(
       product,
       origin,
       p,
       paymentMethod,
       pointsRedeemed,
-      pointValueInr
+      pointValueInr,
+      selectedVariant
     );
     // Log the inquiry in the background — never let a DB hiccup block the
     // actual WhatsApp handoff, which is the real conversion action.

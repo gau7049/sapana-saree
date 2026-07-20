@@ -45,6 +45,10 @@ export function ProfileForm({
               name="full_name"
               defaultValue={fullName}
               placeholder="Your full name"
+              required
+              minLength={2}
+              pattern="[A-Za-z][A-Za-z .'-]*"
+              title="Enter a valid name (letters only)"
             />
           </div>
           <div className="flex items-center justify-between pt-2">

@@ -18,6 +18,7 @@ export interface WhatsAppInquiry {
   userName: string;
   userPhone?: string;
   address?: WhatsAppAddress;
+  selectedVariant?: string;
   paymentMethod?: PaymentMethod;
   pointsRedeemed?: number;
   pointValueInr?: number;
@@ -31,6 +32,7 @@ export function buildWhatsAppMessage(inquiry: WhatsAppInquiry): string {
     `Category: ${inquiry.category}`,
     `Price: ₹${inquiry.price.toLocaleString("en-IN")}`,
     `Link: ${inquiry.productUrl}`,
+    inquiry.selectedVariant ? `Selected saree: ${inquiry.selectedVariant}` : "",
     "",
     `My Name: ${inquiry.userName}`,
     inquiry.userPhone ? `My Phone: ${inquiry.userPhone}` : "",

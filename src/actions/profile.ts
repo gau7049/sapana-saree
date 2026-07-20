@@ -16,6 +16,10 @@ export async function updateProfile(formData: FormData) {
 
   const fullName = ((formData.get("full_name") as string) ?? "").trim() || null;
 
+  if (!fullName || !/^[A-Za-z][A-Za-z .'-]*$/.test(fullName)) {
+    return actionError(msg.INVALID_FULL_NAME);
+  }
+
   const supabase = await createClient();
   const { error } = await supabase
     .from("profiles")
@@ -46,6 +50,14 @@ export async function saveAddress(formData: FormData) {
 
   if (!line1 || !city || !state || !postalCode || !phone) {
     return actionError(common.MISSING_REQUIRED_FIELDS);
+  }
+
+  if (!/^[1-9][0-9]{5}$/.test(postalCode)) {
+    return actionError(msg.INVALID_POSTAL_CODE);
+  }
+
+  if (!/^[6-9][0-9]{9}$/.test(phone)) {
+    return actionError(msg.INVALID_PHONE);
   }
 
   const supabase = await createClient();

@@ -90,6 +90,11 @@ export function AddressForm({
                 id="postal_code"
                 name="postal_code"
                 defaultValue={postalCode}
+                placeholder="e.g., 400001"
+                inputMode="numeric"
+                pattern="[1-9][0-9]{5}"
+                maxLength={6}
+                title="Enter a valid 6-digit PIN code"
                 required
               />
             </div>
@@ -101,6 +106,10 @@ export function AddressForm({
               name="phone"
               defaultValue={phone}
               placeholder="e.g., 9876543210"
+              inputMode="numeric"
+              pattern="[6-9][0-9]{9}"
+              maxLength={10}
+              title="Enter a valid 10-digit mobile number"
               required
             />
           </div>

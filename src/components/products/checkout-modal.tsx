@@ -150,7 +150,15 @@ function CheckoutModalBody({
               </div>
               <div className="space-y-2">
                 <Label htmlFor="checkout-full-name">Full Name</Label>
-                <Input id="checkout-full-name" name="full_name" required minLength={2} autoComplete="name" />
+                <Input
+                  id="checkout-full-name"
+                  name="full_name"
+                  required
+                  minLength={2}
+                  pattern="[A-Za-z][A-Za-z .'-]*"
+                  title="Enter a valid name (letters only)"
+                  autoComplete="name"
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="checkout-password">Password</Label>
@@ -196,6 +204,8 @@ function CheckoutModalBody({
                   name="full_name"
                   required
                   minLength={2}
+                  pattern="[A-Za-z][A-Za-z .'-]*"
+                  title="Enter a valid name (letters only)"
                   defaultValue={knownProfile?.full_name ?? ""}
                   autoComplete="name"
                 />

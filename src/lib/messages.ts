@@ -79,6 +79,9 @@ export const profile = {
   UPDATED: "Profile updated.",
   UPDATE_ERROR: "Failed to update profile.",
   ADDRESS_SAVED: "Address saved.",
+  INVALID_POSTAL_CODE: "Enter a valid 6-digit PIN code.",
+  INVALID_PHONE: "Enter a valid 10-digit mobile number.",
+  INVALID_FULL_NAME: "Enter a valid full name.",
 } as const;
 
 export const users = {
