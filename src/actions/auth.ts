@@ -7,16 +7,31 @@ import { awardWelcomePoints, attachReferral, ensureReferralCode } from "@/lib/lo
 import { createAdminClient } from "@/lib/supabase/admin";
 import { actionError, actionSuccess } from "@/lib/api/response";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
+import { msSinceOtpSent } from "@/lib/otp-store";
 import { common, auth as msg } from "@/lib/messages";
-import { getServerSiteUrl } from "@/lib/site-url";
 import { normalizeUsername, isValidUsername, synthesizeAuthEmail } from "@/lib/username";
-import { sendPasswordResetEmail } from "@/lib/brevo/send-password-reset";
-import { sendVerificationLinkFor } from "@/lib/email-verification";
+import { sendVerificationOtp, sendPasswordResetOtp, type OtpDispatchResult } from "@/lib/otp-email";
 import { requireAuth } from "@/lib/auth-guard";
+import { OTP_EXPIRY_MINUTES, OTP_RESEND_COOLDOWN_SECONDS } from "@/lib/constants";
 
 function safeRedirectPath(url: string | null): string {
   if (!url || !url.startsWith("/") || url.startsWith("//")) return "/";
   return url;
+}
+
+// Shared by the verification-OTP and password-reset-OTP resend paths: reject
+// locally (no email sent, no Supabase call) if the last code for this key
+// was sent under OTP_RESEND_COOLDOWN_SECONDS ago.
+function tooSoonToResend(otpStoreKey: string): boolean {
+  const msSince = msSinceOtpSent(otpStoreKey);
+  return msSince !== null && msSince < OTP_RESEND_COOLDOWN_SECONDS * 1_000;
+}
+
+// True once the tracked send is missing (never sent / evicted) or older than
+// the app's expiry window — checked before ever calling Supabase's verifyOtp.
+function otpExpired(otpStoreKey: string): boolean {
+  const msSince = msSinceOtpSent(otpStoreKey);
+  return msSince === null || msSince > OTP_EXPIRY_MINUTES * 60_000;
 }
 
 export async function signUp(formData: FormData) {
@@ -29,7 +44,6 @@ export async function signUp(formData: FormData) {
   const fullName = ((formData.get("full_name") as string) ?? "").trim() || null;
   const realEmail = ((formData.get("email") as string) ?? "").trim() || null;
   const password = formData.get("password") as string;
-  const verifyRedirect = (formData.get("verify_redirect") as string) || undefined;
 
   if (!isValidUsername(username)) return actionError(msg.INVALID_USERNAME);
 
@@ -50,9 +64,11 @@ export async function signUp(formData: FormData) {
     );
   }
 
+  let expiresAt: number | null = null;
   if (realEmail) {
     try {
-      await sendVerificationLinkFor(username, realEmail, verifyRedirect);
+      const otp = await sendVerificationOtp(username, realEmail);
+      if (otp.ok) expiresAt = otp.expiresAt;
     } catch {
       // Non-blocking: email is optional, account creation must still succeed.
     }
@@ -84,10 +100,10 @@ export async function signUp(formData: FormData) {
   if (data.session) {
     const redirectField = formData.get("redirect") as string | null;
     if (redirectField !== "stay") redirect(safeRedirectPath(redirectField));
-    return actionSuccess(msg.SIGNUP_SUCCESS);
+    return actionSuccess<OtpDispatchResult>(msg.SIGNUP_SUCCESS, { expiresAt });
   }
 
-  return actionSuccess(msg.SIGNUP_SUCCESS);
+  return actionSuccess<OtpDispatchResult>(msg.SIGNUP_SUCCESS, { expiresAt });
 }
 
 export async function signIn(formData: FormData) {
@@ -120,6 +136,11 @@ export async function signOut() {
   redirect("/login");
 }
 
+export interface ForgotPasswordResult {
+  username: string;
+  expiresAt: number;
+}
+
 export async function forgotPassword(formData: FormData) {
   const ip = await getClientIp();
   // Sends an email per successful call — keep this the strictest limit here.
@@ -128,6 +149,9 @@ export async function forgotPassword(formData: FormData) {
   }
 
   const username = normalizeUsername((formData.get("username") as string) ?? "");
+  if (tooSoonToResend(`reset:${username}`)) {
+    return actionError(msg.OTP_RESEND_TOO_SOON);
+  }
 
   const admin = createAdminClient();
   const { data: profile } = await admin
@@ -140,42 +164,78 @@ export async function forgotPassword(formData: FormData) {
     return actionError(msg.NO_RECOVERY_EMAIL);
   }
 
-  const siteUrl = await getServerSiteUrl();
-  const { data, error } = await admin.auth.admin.generateLink({
-    type: "recovery",
-    email: synthesizeAuthEmail(username),
-    options: {
-      redirectTo: `${siteUrl}/auth/callback?next=/reset-password`,
-    },
+  const otp = await sendPasswordResetOtp(username, profile.email);
+  if (!otp.ok) return actionError(common.SOMETHING_WENT_WRONG);
+
+  return actionSuccess<ForgotPasswordResult>(msg.OTP_SENT, {
+    username,
+    expiresAt: otp.expiresAt,
   });
-
-  if (error || !data?.properties?.action_link) {
-    return actionError(common.SOMETHING_WENT_WRONG);
-  }
-
-  const sent = await sendPasswordResetEmail(profile.email, data.properties.action_link);
-  if (!sent) return actionError(common.SOMETHING_WENT_WRONG);
-
-  return actionSuccess(msg.PASSWORD_RESET_SENT);
 }
 
-export async function resetPassword(formData: FormData) {
+export async function resendPasswordResetOtp(username: string) {
   const ip = await getClientIp();
-  if (!checkRateLimit(`auth:reset:${ip}`, 5, 60_000).allowed) {
+  if (!checkRateLimit(`auth:forgot:${ip}`, 3, 60_000).allowed) {
     return actionError(common.RATE_LIMIT_EXCEEDED);
   }
 
-  const password = formData.get("password") as string;
+  const normalized = normalizeUsername(username);
+  if (tooSoonToResend(`reset:${normalized}`)) {
+    return actionError(msg.OTP_RESEND_TOO_SOON);
+  }
 
-  const supabase = await createClient();
-  const { error } = await supabase.auth.updateUser({ password });
+  const admin = createAdminClient();
+  const { data: profile } = await admin
+    .from("profiles")
+    .select("email, email_verified")
+    .eq("username", normalized)
+    .maybeSingle();
 
-  if (error) return actionError(error.message);
+  if (!profile?.email || !profile.email_verified) {
+    return actionError(msg.NO_RECOVERY_EMAIL);
+  }
 
-  redirect("/login?message=" + encodeURIComponent(msg.PASSWORD_UPDATED));
+  const otp = await sendPasswordResetOtp(normalized, profile.email);
+  if (!otp.ok) return actionError(common.SOMETHING_WENT_WRONG);
+
+  return actionSuccess<OtpDispatchResult>(msg.OTP_SENT, { expiresAt: otp.expiresAt });
 }
 
-export async function resendVerificationEmail(formData?: FormData) {
+// Replaces the old link-based resetPassword: verifies the OTP AND sets the
+// new password in one submission (the code's verifyOtp call is also what
+// establishes the session updateUser needs — there's no separate "click the
+// link" step creating it beforehand anymore).
+export async function verifyPasswordResetOtp(
+  username: string,
+  code: string,
+  newPassword: string
+) {
+  const ip = await getClientIp();
+  if (!checkRateLimit(`auth:reset-verify:${ip}`, 10, 5 * 60_000).allowed) {
+    return actionError(common.RATE_LIMIT_EXCEEDED);
+  }
+
+  const normalized = normalizeUsername(username);
+  if (otpExpired(`reset:${normalized}`)) {
+    return actionError(msg.OTP_EXPIRED);
+  }
+
+  const supabase = await createClient();
+  const { error: verifyError } = await supabase.auth.verifyOtp({
+    email: synthesizeAuthEmail(normalized),
+    token: code,
+    type: "recovery",
+  });
+
+  if (verifyError) return actionError(msg.OTP_INVALID);
+
+  const { error: updateError } = await supabase.auth.updateUser({ password: newPassword });
+  if (updateError) return actionError(updateError.message);
+
+  redirect("/login?message=" + encodeURIComponent(msg.PASSWORD_RESET_SUCCESS));
+}
+
+export async function sendEmailVerificationOtp() {
   let profile;
   try {
     profile = await requireAuth();
@@ -187,9 +247,48 @@ export async function resendVerificationEmail(formData?: FormData) {
     return actionError(msg.NO_EMAIL_TO_VERIFY);
   }
 
-  const verifyRedirect = (formData?.get("verify_redirect") as string) || undefined;
-  const sent = await sendVerificationLinkFor(profile.username, profile.email, verifyRedirect);
-  if (!sent) return actionError(common.SOMETHING_WENT_WRONG);
+  if (tooSoonToResend(`verify:${profile.username}`)) {
+    return actionError(msg.OTP_RESEND_TOO_SOON);
+  }
 
-  return actionSuccess(msg.VERIFICATION_EMAIL_SENT);
+  const otp = await sendVerificationOtp(profile.username, profile.email);
+  if (!otp.ok) return actionError(common.SOMETHING_WENT_WRONG);
+
+  return actionSuccess<OtpDispatchResult>(msg.OTP_SENT, { expiresAt: otp.expiresAt });
+}
+
+export async function verifyEmailOtp(code: string) {
+  let profile;
+  try {
+    profile = await requireAuth();
+  } catch {
+    return actionError(common.NOT_AUTHENTICATED);
+  }
+
+  const ip = await getClientIp();
+  if (!checkRateLimit(`auth:verify-otp:${ip}`, 10, 5 * 60_000).allowed) {
+    return actionError(common.RATE_LIMIT_EXCEEDED);
+  }
+
+  if (otpExpired(`verify:${profile.username}`)) {
+    return actionError(msg.OTP_EXPIRED);
+  }
+
+  const supabase = await createClient();
+  const { error: verifyError } = await supabase.auth.verifyOtp({
+    email: synthesizeAuthEmail(profile.username),
+    token: code,
+    type: "email",
+  });
+
+  if (verifyError) return actionError(msg.OTP_INVALID);
+
+  const { error: updateError } = await supabase
+    .from("profiles")
+    .update({ email_verified: true })
+    .eq("id", profile.id);
+
+  if (updateError) return actionError(common.SOMETHING_WENT_WRONG);
+
+  return actionSuccess(msg.EMAIL_VERIFIED);
 }

@@ -1,17 +1,18 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
-import { toast } from "sonner";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
 import { updateProfile } from "@/actions/profile";
-import { resendVerificationEmail } from "@/actions/auth";
+import { sendEmailVerificationOtp, verifyEmailOtp } from "@/actions/auth";
 import { handleAction } from "@/lib/action-handler";
 import { SignOutButton } from "@/components/auth/sign-out-button";
+import { OtpInput } from "@/components/auth/otp-input";
+import { useOtpCountdown, formatMmSs } from "@/hooks/use-otp-countdown";
 
 export function ProfileForm({
   username,
@@ -25,18 +26,17 @@ export function ProfileForm({
   fullName: string;
 }) {
   const [loading, setLoading] = useState(false);
-  const [resending, setResending] = useState(false);
-  const searchParams = useSearchParams();
+  const [sending, setSending] = useState(false);
+  const [verifying, setVerifying] = useState(false);
+  const [code, setCode] = useState("");
+  const [expiresAt, setExpiresAt] = useState<number | null>(null);
+  const [sentAt, setSentAt] = useState<number | null>(null);
   const router = useRouter();
 
-  // The verification email link lands back here with ?verified=1 (see
-  // lib/email-verification.ts) — show a toast once, then strip the param.
-  useEffect(() => {
-    if (searchParams.get("verified") === "1") {
-      toast.success("Email verified successfully.");
-      router.replace("/account");
-    }
-  }, [searchParams, router]);
+  const { canResend, resendSecondsLeft, expirySecondsLeft, isExpired } = useOtpCountdown(
+    expiresAt,
+    sentAt
+  );
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -46,10 +46,27 @@ export function ProfileForm({
     setLoading(false);
   }
 
-  async function handleResendVerification() {
-    setResending(true);
-    await handleAction(resendVerificationEmail());
-    setResending(false);
+  async function handleSendCode() {
+    setSending(true);
+    const result = await handleAction(sendEmailVerificationOtp());
+    setSending(false);
+    if (result.status) {
+      setExpiresAt(result.result?.expiresAt ?? null);
+      setSentAt(Date.now());
+      setCode("");
+    }
+  }
+
+  async function handleVerifyCode() {
+    setVerifying(true);
+    const result = await handleAction(verifyEmailOtp(code));
+    setVerifying(false);
+    if (result.status) {
+      setExpiresAt(null);
+      setSentAt(null);
+      setCode("");
+      router.refresh();
+    }
   }
 
   return (
@@ -85,18 +102,53 @@ export function ProfileForm({
               Used only to recover your password if you forget it.
             </p>
             {email && !emailVerified && (
-              <div className="flex items-center justify-between gap-3 rounded-md bg-yellow-50 p-3 text-sm text-yellow-800 dark:bg-yellow-950 dark:text-yellow-300">
-                <span>Verify this email to enable password recovery.</span>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  disabled={resending}
-                  onClick={handleResendVerification}
-                >
-                  {resending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Resend link
-                </Button>
+              <div className="space-y-3 rounded-md bg-yellow-50 p-3 text-sm text-yellow-800 dark:bg-yellow-950 dark:text-yellow-300">
+                {sentAt === null ? (
+                  <div className="flex items-center justify-between gap-3">
+                    <span>Verify this email to enable password recovery.</span>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={sending}
+                      onClick={handleSendCode}
+                    >
+                      {sending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                      Send code
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <span>Enter the 6-digit code we emailed you.</span>
+                    <OtpInput value={code} onChange={setCode} disabled={verifying} />
+                    <div className="flex items-center justify-between text-xs">
+                      <span>
+                        {isExpired ? "Code expired" : `Expires in ${formatMmSs(expirySecondsLeft)}`}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={handleSendCode}
+                        disabled={!canResend || sending}
+                        className="font-medium underline disabled:cursor-not-allowed disabled:no-underline disabled:opacity-60"
+                      >
+                        {sending
+                          ? "Sending..."
+                          : canResend
+                            ? "Resend code"
+                            : `Resend in ${resendSecondsLeft}s`}
+                      </button>
+                    </div>
+                    <Button
+                      type="button"
+                      size="sm"
+                      disabled={verifying || code.length !== 6 || isExpired}
+                      onClick={handleVerifyCode}
+                    >
+                      {verifying && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                      Verify
+                    </Button>
+                  </div>
+                )}
               </div>
             )}
           </div>

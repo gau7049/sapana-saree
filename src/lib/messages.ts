@@ -19,11 +19,15 @@ export const auth = {
   INVALID_USERNAME: "Username must be 3-20 characters: lowercase letters, numbers, and underscores, starting with a letter.",
   LOGIN_ADMIN_REQUIRED: "Unauthorized. Please login as admin.",
   LOGOUT_SUCCESS: "Logged out successfully.",
-  PASSWORD_RESET_SENT: "Check your email for a password reset link.",
   NO_RECOVERY_EMAIL: "No verified recovery email on file for this account. Please double-check your password, verify your email from your account page, or create a new account.",
   PASSWORD_UPDATED: "Password updated successfully.",
-  VERIFICATION_EMAIL_SENT: "Verification email sent. Check your inbox to confirm your email.",
   NO_EMAIL_TO_VERIFY: "There's no unverified email on file for your account.",
+  OTP_SENT: "We've emailed you a 6-digit code.",
+  OTP_INVALID: "That code is incorrect. Please try again.",
+  OTP_EXPIRED: "That code has expired. Request a new one.",
+  OTP_RESEND_TOO_SOON: "Please wait a moment before requesting another code.",
+  EMAIL_VERIFIED: "Email verified successfully.",
+  PASSWORD_RESET_SUCCESS: "Password updated. You can now sign in.",
 } as const;
 
 export const products = {

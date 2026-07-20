@@ -36,6 +36,9 @@ export const RATE_LIMIT_MAX = 50;
 export const RATE_LIMIT_WINDOW_MS = 60_000;
 export const API_TIMEOUT_MS = 8_000;
 
+export const OTP_EXPIRY_MINUTES = 5;
+export const OTP_RESEND_COOLDOWN_SECONDS = 30;
+
 export const ISR_REVALIDATE_INTERVAL = 3600;
 export const CACHE_TTL = 3600;
 
@@ -63,4 +66,4 @@ export const NAV_LINKS = [
 // session redirect before the route itself ever runs.
 export const PROTECTED_ROUTES = ["/account", "/wishlist"];
 export const ADMIN_ROUTES = ["/admin"];
-export const AUTH_ROUTES = ["/login", "/signup", "/forgot-password", "/reset-password"];
+export const AUTH_ROUTES = ["/login", "/signup", "/forgot-password"];

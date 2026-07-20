@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { actionError, actionSuccess } from "@/lib/api/response";
 import { common, profile as msg } from "@/lib/messages";
 import { requireAuth } from "@/lib/auth-guard";
-import { sendVerificationLinkFor } from "@/lib/email-verification";
+import { sendVerificationOtp, type OtpDispatchResult } from "@/lib/otp-email";
 
 export async function updateProfile(formData: FormData) {
   let user;
@@ -18,7 +18,6 @@ export async function updateProfile(formData: FormData) {
   const fullName = ((formData.get("full_name") as string) ?? "").trim() || null;
   const email = ((formData.get("email") as string) ?? "").trim() || null;
   const emailChanged = email !== user.email;
-  const verifyRedirect = (formData.get("verify_redirect") as string) || undefined;
 
   const supabase = await createClient();
   const { error } = await supabase
@@ -34,16 +33,18 @@ export async function updateProfile(formData: FormData) {
 
   if (error) return actionError(msg.UPDATE_ERROR);
 
+  let expiresAt: number | null = null;
   if (emailChanged && email) {
     try {
-      await sendVerificationLinkFor(user.username, email, verifyRedirect);
+      const otp = await sendVerificationOtp(user.username, email);
+      if (otp.ok) expiresAt = otp.expiresAt;
     } catch {
       // Non-blocking: profile update must still succeed.
     }
   }
 
   revalidatePath("/account");
-  return actionSuccess(msg.UPDATED);
+  return actionSuccess<OtpDispatchResult>(msg.UPDATED, { expiresAt });
 }
 
 export async function saveAddress(formData: FormData) {

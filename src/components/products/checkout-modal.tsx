@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,12 +8,14 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { PasswordInput } from "@/components/auth/password-input";
 import { AddressForm } from "@/components/shared/address-form";
-import { signUp, resendVerificationEmail } from "@/actions/auth";
+import { signUp, sendEmailVerificationOtp, verifyEmailOtp } from "@/actions/auth";
 import { updateProfile } from "@/actions/profile";
 import { getCheckoutProfileStatus } from "@/actions/checkout";
 import { handleAction } from "@/lib/action-handler";
 import { hasSavedAddress } from "@/lib/profile-helpers";
 import { PaymentChoice } from "@/components/products/payment-choice";
+import { OtpInput } from "@/components/auth/otp-input";
+import { useOtpCountdown, formatMmSs } from "@/hooks/use-otp-countdown";
 import type { Profile, PaymentMethod } from "@/types";
 
 type Step = "signup" | "complete_profile" | "verify_email" | "address" | "success";
@@ -69,9 +70,6 @@ function CheckoutModalBody({
     pointValueInr: number
   ) => void;
 }) {
-  const pathname = usePathname();
-  const verifyRedirect = `${pathname}?checkout_verified=1`;
-
   const [step, setStep] = useState<Step>(() => computeInitialStep(profile));
   const [flowOrigin] = useState<FlowOrigin>(profile ? "profile" : "signup");
   const [knownProfile, setKnownProfile] = useState<Profile | null>(profile);
@@ -82,27 +80,17 @@ function CheckoutModalBody({
     pointValueInr: 1,
   });
   const [loading, setLoading] = useState(false);
-  const [resending, setResending] = useState(false);
   const [password, setPassword] = useState("");
-  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  useEffect(() => {
-    if (step !== "verify_email") {
-      if (pollRef.current) clearInterval(pollRef.current);
-      return;
-    }
-    pollRef.current = setInterval(async () => {
-      const result = await getCheckoutProfileStatus();
-      const nextProfile = result.result?.profile;
-      if (nextProfile?.email_verified) {
-        setKnownProfile(nextProfile);
-        setStep(hasSavedAddress(nextProfile) ? "success" : "address");
-      }
-    }, 3000);
-    return () => {
-      if (pollRef.current) clearInterval(pollRef.current);
-    };
-  }, [step]);
+  const [otpCode, setOtpCode] = useState("");
+  const [otpExpiresAt, setOtpExpiresAt] = useState<number | null>(null);
+  const [otpSentAt, setOtpSentAt] = useState<number | null>(null);
+  const [sendingOtp, setSendingOtp] = useState(false);
+  const [verifyingOtp, setVerifyingOtp] = useState(false);
+  const { canResend, resendSecondsLeft, expirySecondsLeft, isExpired } = useOtpCountdown(
+    otpExpiresAt,
+    otpSentAt
+  );
 
   useEffect(() => {
     if (step !== "success") return;
@@ -126,6 +114,13 @@ function CheckoutModalBody({
     };
   }, [step]);
 
+  function beginOtpStep(expiresAt: number | null | undefined) {
+    setOtpCode("");
+    setOtpExpiresAt(expiresAt ?? null);
+    setOtpSentAt(Date.now());
+    setStep("verify_email");
+  }
+
   async function handleSignupSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
@@ -134,13 +129,11 @@ function CheckoutModalBody({
     if (pwd !== confirm) return;
 
     formData.set("redirect", "stay");
-    formData.set("verify_redirect", verifyRedirect);
 
     setLoading(true);
-    await handleAction(signUp(formData), {
-      onSuccess: () => setStep("verify_email"),
-    });
+    const result = await handleAction(signUp(formData));
     setLoading(false);
+    if (result.status) beginOtpStep(result.result?.expiresAt);
   }
 
   async function handleCompleteProfileSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -150,29 +143,41 @@ function CheckoutModalBody({
     const needsVerification =
       submittedEmail !== (knownProfile?.email ?? "") || !knownProfile?.email_verified;
 
-    formData.set("verify_redirect", verifyRedirect);
-
     setLoading(true);
-    await handleAction(updateProfile(formData), {
-      onSuccess: () => {
-        if (needsVerification) {
-          setStep("verify_email");
-        } else if (knownProfile && !hasSavedAddress(knownProfile)) {
-          setStep("address");
-        } else {
-          setStep("success");
-        }
-      },
-    });
+    const result = await handleAction(updateProfile(formData));
     setLoading(false);
+    if (!result.status) return;
+
+    if (needsVerification) {
+      beginOtpStep(result.result?.expiresAt);
+    } else if (knownProfile && !hasSavedAddress(knownProfile)) {
+      setStep("address");
+    } else {
+      setStep("success");
+    }
   }
 
-  async function handleResend() {
-    setResending(true);
-    const formData = new FormData();
-    formData.set("verify_redirect", verifyRedirect);
-    await handleAction(resendVerificationEmail(formData));
-    setResending(false);
+  async function handleSendOtp() {
+    setSendingOtp(true);
+    const result = await handleAction(sendEmailVerificationOtp());
+    setSendingOtp(false);
+    if (result.status) {
+      setOtpCode("");
+      setOtpExpiresAt(result.result?.expiresAt ?? null);
+      setOtpSentAt(Date.now());
+    }
+  }
+
+  async function handleVerifyOtp() {
+    setVerifyingOtp(true);
+    const result = await handleAction(verifyEmailOtp(otpCode));
+    setVerifyingOtp(false);
+    if (!result.status) return;
+
+    const status = await getCheckoutProfileStatus();
+    const nextProfile = status.result?.profile;
+    if (nextProfile) setKnownProfile(nextProfile);
+    setStep(nextProfile && hasSavedAddress(nextProfile) ? "success" : "address");
   }
 
   return (
@@ -277,22 +282,36 @@ function CheckoutModalBody({
             </DialogHeader>
             <div className="space-y-4 text-sm">
               <p className="text-muted-foreground">
-                We sent a verification link to your email. Click it to continue — this
-                window will update automatically once verified.
+                We emailed you a 6-digit code. Enter it below to continue.
               </p>
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Waiting for verification...
+              <div className="space-y-2">
+                <OtpInput value={otpCode} onChange={setOtpCode} disabled={verifyingOtp} />
+                <div className="flex items-center justify-between text-xs text-muted-foreground">
+                  <span>
+                    {isExpired ? "Code expired" : `Expires in ${formatMmSs(expirySecondsLeft)}`}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleSendOtp}
+                    disabled={!canResend || sendingOtp}
+                    className="font-medium text-primary hover:underline disabled:cursor-not-allowed disabled:text-muted-foreground disabled:no-underline"
+                  >
+                    {sendingOtp
+                      ? "Sending..."
+                      : canResend
+                        ? "Resend code"
+                        : `Resend in ${resendSecondsLeft}s`}
+                  </button>
+                </div>
               </div>
               <Button
                 type="button"
-                variant="outline"
                 className="w-full"
-                disabled={resending}
-                onClick={handleResend}
+                disabled={verifyingOtp || otpCode.length !== 6 || isExpired}
+                onClick={handleVerifyOtp}
               >
-                {resending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Resend link
+                {verifyingOtp && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Verify
               </Button>
             </div>
           </>

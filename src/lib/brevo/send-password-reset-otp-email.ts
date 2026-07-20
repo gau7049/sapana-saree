@@ -1,17 +1,19 @@
 import { sendBrevoEmail } from "./client";
-import { SITE_NAME } from "@/lib/constants";
+import { SITE_NAME, OTP_EXPIRY_MINUTES } from "@/lib/constants";
 
-export async function sendPasswordResetEmail(
+export async function sendPasswordResetOtpEmail(
   to: string,
-  resetLink: string
+  code: string
 ): Promise<boolean> {
   return sendBrevoEmail({
     to,
-    subject: `Reset your ${SITE_NAME} password`,
+    subject: `Your ${SITE_NAME} password reset code`,
     text: [
       `We received a request to reset your ${SITE_NAME} password.`,
       "",
-      `Reset link: ${resetLink}`,
+      `Your reset code: ${code}`,
+      "",
+      `This code expires in ${OTP_EXPIRY_MINUTES} minutes.`,
       "",
       "If you didn't request this, you can safely ignore this email.",
     ].join("\n"),
