@@ -34,7 +34,6 @@ interface InquiryRow {
     full_name: string | null;
     username: string;
     phone: string | null;
-    email: string | null;
     address_line1: string | null;
     address_line2: string | null;
     city: string | null;
@@ -154,12 +153,6 @@ export function InquiryManager({ inquiries }: { inquiries: InquiryRow[] }) {
               <div>
                 <span className="text-muted-foreground">Phone: </span>
                 <span className="font-medium">{inquiry.profiles.phone}</span>
-              </div>
-            )}
-            {inquiry.profiles?.email && (
-              <div>
-                <span className="text-muted-foreground">Email: </span>
-                <span className="font-medium">{inquiry.profiles.email}</span>
               </div>
             )}
             <div>

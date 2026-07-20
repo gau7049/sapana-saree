@@ -19,15 +19,8 @@ export const auth = {
   INVALID_USERNAME: "Username must be 3-20 characters: lowercase letters, numbers, and underscores, starting with a letter.",
   LOGIN_ADMIN_REQUIRED: "Unauthorized. Please login as admin.",
   LOGOUT_SUCCESS: "Logged out successfully.",
-  NO_RECOVERY_EMAIL: "No verified recovery email on file for this account. Please double-check your password, verify your email from your account page, or create a new account.",
   PASSWORD_UPDATED: "Password updated successfully.",
-  NO_EMAIL_TO_VERIFY: "There's no unverified email on file for your account.",
-  OTP_SENT: "We've emailed you a 6-digit code.",
-  OTP_INVALID: "That code is incorrect. Please try again.",
-  OTP_EXPIRED: "That code has expired. Request a new one.",
-  OTP_RESEND_TOO_SOON: "Please wait a moment before requesting another code.",
-  EMAIL_VERIFIED: "Email verified successfully.",
-  PASSWORD_RESET_SUCCESS: "Password updated. You can now sign in.",
+  ACCOUNT_DISABLED: "This account has been disabled. Contact support if you believe this is a mistake.",
 } as const;
 
 export const products = {
@@ -86,6 +79,13 @@ export const profile = {
   UPDATED: "Profile updated.",
   UPDATE_ERROR: "Failed to update profile.",
   ADDRESS_SAVED: "Address saved.",
+} as const;
+
+export const users = {
+  DEACTIVATED: "User deactivated.",
+  ACTIVATED: "User reactivated.",
+  DELETED: "User deleted.",
+  PASSWORD_RESET: "Password reset.",
 } as const;
 
 export const contact = {

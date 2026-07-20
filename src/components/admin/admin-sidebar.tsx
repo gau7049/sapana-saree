@@ -13,6 +13,7 @@ import {
   Settings,
   ArrowLeft,
   Menu,
+  Users,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -26,6 +27,7 @@ const ADMIN_NAV: { href: string; label: string; icon: React.ElementType; exact?:
   { href: "/admin/categories", label: "Categories", icon: FolderTree },
   { href: "/admin/reviews", label: "Reviews", icon: Star },
   { href: "/admin/inquiries", label: "Inquiries", icon: MessageCircle },
+  { href: "/admin/users", label: "Users", icon: Users },
   { href: "/admin/loyalty", label: "Loyalty", icon: Coins },
   { href: "/admin/messages", label: "Messages", icon: Mail },
   { href: "/admin/settings", label: "Settings", icon: Settings },

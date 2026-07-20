@@ -17,7 +17,6 @@ export interface WhatsAppInquiry {
   price: number;
   userName: string;
   userPhone?: string;
-  userEmail?: string;
   address?: WhatsAppAddress;
   paymentMethod?: PaymentMethod;
   pointsRedeemed?: number;
@@ -35,7 +34,6 @@ export function buildWhatsAppMessage(inquiry: WhatsAppInquiry): string {
     "",
     `My Name: ${inquiry.userName}`,
     inquiry.userPhone ? `My Phone: ${inquiry.userPhone}` : "",
-    inquiry.userEmail ? `My Email: ${inquiry.userEmail}` : "",
     inquiry.address
       ? [
           "",

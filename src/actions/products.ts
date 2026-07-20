@@ -1,9 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { after } from "next/server";
 import { updateTag, revalidatePath } from "next/cache";
-import { sendNewProductAnnouncement } from "@/lib/product-notifications";
 import { createClient } from "@/lib/supabase/server";
 import { actionError, actionSuccess } from "@/lib/api/response";
 import { common, products as msg } from "@/lib/messages";
@@ -83,13 +81,6 @@ export async function createProduct(formData: FormData) {
 
   revalidateProductCaches(values.slug);
 
-  // Announce to registered customers after the response is sent; the
-  // notified_at guard inside makes this once-per-product no matter how often
-  // the product is edited later.
-  if (values.status === "published") {
-    after(() => sendNewProductAnnouncement(data.id));
-  }
-
   redirect(`/admin/products/${data.id}/edit`);
 }
 
@@ -114,12 +105,6 @@ export async function updateProduct(id: string, formData: FormData) {
   }
 
   revalidateProductCaches(values.slug);
-
-  // Covers the draft-first workflow: the announcement goes out when the
-  // product FIRST becomes published (notified_at guard prevents repeats).
-  if (values.status === "published") {
-    after(() => sendNewProductAnnouncement(id));
-  }
 
   return actionSuccess(msg.UPDATED);
 }

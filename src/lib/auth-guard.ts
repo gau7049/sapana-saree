@@ -24,7 +24,9 @@ export async function getCurrentProfile(): Promise<Profile | null> {
 
 export async function requireAuth(): Promise<Profile> {
   const profile = await getCurrentProfile();
-  if (!profile) throw new Error("Unauthorized");
+  // A deactivated account's session stops working everywhere, not just at
+  // the sign-in form — defense in depth beyond the signIn-time check.
+  if (!profile || !profile.is_active) throw new Error("Unauthorized");
   return profile;
 }
 

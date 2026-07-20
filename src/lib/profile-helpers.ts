@@ -12,8 +12,8 @@ export function hasSavedAddress(
   );
 }
 
-// Gate used before "Buy Now": a verified email + full address is required so
-// the WhatsApp order message always has everything needed to fulfill it.
+// Gate used before "Buy Now": a full name + address is required so the
+// WhatsApp order message always has everything needed to fulfill it.
 export function isReadyForCheckout(p: Profile): boolean {
-  return !!p.full_name?.trim() && !!p.email && p.email_verified && hasSavedAddress(p);
+  return !!p.full_name?.trim() && hasSavedAddress(p);
 }

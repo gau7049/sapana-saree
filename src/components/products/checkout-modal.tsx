@@ -8,23 +8,20 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { PasswordInput } from "@/components/auth/password-input";
 import { AddressForm } from "@/components/shared/address-form";
-import { signUp, sendEmailVerificationOtp, verifyEmailOtp } from "@/actions/auth";
+import { signUp } from "@/actions/auth";
 import { updateProfile } from "@/actions/profile";
 import { getCheckoutProfileStatus } from "@/actions/checkout";
 import { handleAction } from "@/lib/action-handler";
 import { hasSavedAddress } from "@/lib/profile-helpers";
 import { PaymentChoice } from "@/components/products/payment-choice";
-import { OtpInput } from "@/components/auth/otp-input";
-import { useOtpCountdown, formatMmSs } from "@/hooks/use-otp-countdown";
 import type { Profile, PaymentMethod } from "@/types";
 
-type Step = "signup" | "complete_profile" | "verify_email" | "address" | "success";
+type Step = "signup" | "complete_profile" | "address" | "success";
 type FlowOrigin = "signup" | "profile";
 
 function computeInitialStep(profile: Profile | null): Step {
   if (!profile) return "signup";
   if (!profile.full_name?.trim()) return "complete_profile";
-  if (!profile.email || !profile.email_verified) return "verify_email";
   if (!hasSavedAddress(profile)) return "address";
   return "success";
 }
@@ -82,16 +79,6 @@ function CheckoutModalBody({
   const [loading, setLoading] = useState(false);
   const [password, setPassword] = useState("");
 
-  const [otpCode, setOtpCode] = useState("");
-  const [otpExpiresAt, setOtpExpiresAt] = useState<number | null>(null);
-  const [otpSentAt, setOtpSentAt] = useState<number | null>(null);
-  const [sendingOtp, setSendingOtp] = useState(false);
-  const [verifyingOtp, setVerifyingOtp] = useState(false);
-  const { canResend, resendSecondsLeft, expirySecondsLeft, isExpired } = useOtpCountdown(
-    otpExpiresAt,
-    otpSentAt
-  );
-
   useEffect(() => {
     if (step !== "success") return;
     let cancelled = false;
@@ -114,13 +101,6 @@ function CheckoutModalBody({
     };
   }, [step]);
 
-  function beginOtpStep(expiresAt: number | null | undefined) {
-    setOtpCode("");
-    setOtpExpiresAt(expiresAt ?? null);
-    setOtpSentAt(Date.now());
-    setStep("verify_email");
-  }
-
   async function handleSignupSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
@@ -133,51 +113,19 @@ function CheckoutModalBody({
     setLoading(true);
     const result = await handleAction(signUp(formData));
     setLoading(false);
-    if (result.status) beginOtpStep(result.result?.expiresAt);
+    if (result.status) setStep("address");
   }
 
   async function handleCompleteProfileSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-    const submittedEmail = ((formData.get("email") as string) ?? "").trim();
-    const needsVerification =
-      submittedEmail !== (knownProfile?.email ?? "") || !knownProfile?.email_verified;
 
     setLoading(true);
     const result = await handleAction(updateProfile(formData));
     setLoading(false);
     if (!result.status) return;
 
-    if (needsVerification) {
-      beginOtpStep(result.result?.expiresAt);
-    } else if (knownProfile && !hasSavedAddress(knownProfile)) {
-      setStep("address");
-    } else {
-      setStep("success");
-    }
-  }
-
-  async function handleSendOtp() {
-    setSendingOtp(true);
-    const result = await handleAction(sendEmailVerificationOtp());
-    setSendingOtp(false);
-    if (result.status) {
-      setOtpCode("");
-      setOtpExpiresAt(result.result?.expiresAt ?? null);
-      setOtpSentAt(Date.now());
-    }
-  }
-
-  async function handleVerifyOtp() {
-    setVerifyingOtp(true);
-    const result = await handleAction(verifyEmailOtp(otpCode));
-    setVerifyingOtp(false);
-    if (!result.status) return;
-
-    const status = await getCheckoutProfileStatus();
-    const nextProfile = status.result?.profile;
-    if (nextProfile) setKnownProfile(nextProfile);
-    setStep(nextProfile && hasSavedAddress(nextProfile) ? "success" : "address");
+    setStep(knownProfile && hasSavedAddress(knownProfile) ? "success" : "address");
   }
 
   return (
@@ -203,10 +151,6 @@ function CheckoutModalBody({
               <div className="space-y-2">
                 <Label htmlFor="checkout-full-name">Full Name</Label>
                 <Input id="checkout-full-name" name="full_name" required minLength={2} autoComplete="name" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="checkout-email">Email Address</Label>
-                <Input id="checkout-email" name="email" type="email" required autoComplete="email" />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="checkout-password">Password</Label>
@@ -256,64 +200,11 @@ function CheckoutModalBody({
                   autoComplete="name"
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="checkout-email-2">Email Address</Label>
-                <Input
-                  id="checkout-email-2"
-                  name="email"
-                  type="email"
-                  required
-                  defaultValue={knownProfile?.email ?? ""}
-                  autoComplete="email"
-                />
-              </div>
               <Button type="submit" className="w-full" disabled={loading}>
                 {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Continue
               </Button>
             </form>
-          </>
-        )}
-
-        {step === "verify_email" && (
-          <>
-            <DialogHeader>
-              <DialogTitle>Verify your email</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4 text-sm">
-              <p className="text-muted-foreground">
-                We emailed you a 6-digit code. Enter it below to continue.
-              </p>
-              <div className="space-y-2">
-                <OtpInput value={otpCode} onChange={setOtpCode} disabled={verifyingOtp} />
-                <div className="flex items-center justify-between text-xs text-muted-foreground">
-                  <span>
-                    {isExpired ? "Code expired" : `Expires in ${formatMmSs(expirySecondsLeft)}`}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={handleSendOtp}
-                    disabled={!canResend || sendingOtp}
-                    className="font-medium text-primary hover:underline disabled:cursor-not-allowed disabled:text-muted-foreground disabled:no-underline"
-                  >
-                    {sendingOtp
-                      ? "Sending..."
-                      : canResend
-                        ? "Resend code"
-                        : `Resend in ${resendSecondsLeft}s`}
-                  </button>
-                </div>
-              </div>
-              <Button
-                type="button"
-                className="w-full"
-                disabled={verifyingOtp || otpCode.length !== 6 || isExpired}
-                onClick={handleVerifyOtp}
-              >
-                {verifyingOtp && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Verify
-              </Button>
-            </div>
           </>
         )}
 

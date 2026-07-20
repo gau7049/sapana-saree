@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter, useSearchParams, usePathname } from "next/navigation";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -35,7 +35,6 @@ function buildInquiryDetails(
     price: product.price,
     userName: profile.full_name ?? profile.username,
     userPhone: profile.phone ?? undefined,
-    userEmail: profile.email ?? undefined,
     paymentMethod,
     pointsRedeemed,
     pointValueInr,
@@ -64,8 +63,6 @@ export function BuyNowButton({
   const [modalOpen, setModalOpen] = useState(false);
   const [paymentOpen, setPaymentOpen] = useState(false);
   const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
 
   function fireWhatsApp(
     p: Profile,
@@ -91,29 +88,6 @@ export function BuyNowButton({
     window.open(buildWhatsAppUrl(details), "_blank");
     toast.success("Opening WhatsApp...");
   }
-
-  useEffect(() => {
-    if (searchParams.get("checkout_verified") !== "1") return;
-
-    const params = new URLSearchParams(searchParams.toString());
-    params.delete("checkout_verified");
-    router.replace(params.size ? `${pathname}?${params}` : pathname);
-
-    if (profile && profile.email_verified) {
-      toast.success(profile.full_name ? "Email verified" : "Login Successful");
-      if (isReadyForCheckout(profile)) {
-        // Resume with the payment step — window.open needs a user gesture
-        // anyway, so auto-firing here would be popup-blocked.
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setPaymentOpen(true);
-        return;
-      }
-    }
-    // One-time mount effect resuming a checkout flow from the magic-link redirect's
-    // query marker — not a derived-state sync, so the direct setState here is intentional.
-    setModalOpen(true);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   function handleBuyNow() {
     if (profile && isReadyForCheckout(profile)) {

@@ -15,8 +15,6 @@ export type PaymentMethod = "online" | "cod";
 export interface Profile {
   id: string;
   username: string;
-  email: string | null;
-  email_verified: boolean;
   full_name: string | null;
   phone: string | null;
   address_line1: string | null;
@@ -27,6 +25,7 @@ export interface Profile {
   postal_code: string | null;
   avatar_url: string | null;
   role: UserRole;
+  is_active: boolean;
   referral_code: string | null;
   referred_by: string | null;
   created_at: string;

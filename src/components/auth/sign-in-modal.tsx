@@ -89,15 +89,7 @@ export function SignInModal({ open, onOpenChange, onSuccess }: SignInModalProps)
             />
           </div>
           <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="signin-modal-password">Password</Label>
-              <Link
-                href="/forgot-password"
-                className="text-sm text-muted-foreground hover:text-primary"
-              >
-                Forgot password?
-              </Link>
-            </div>
+            <Label htmlFor="signin-modal-password">Password</Label>
             <PasswordInput
               id="signin-modal-password"
               name="password"

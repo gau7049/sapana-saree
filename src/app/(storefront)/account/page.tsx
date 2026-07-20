@@ -31,8 +31,6 @@ export default async function AccountPage() {
     <div className="space-y-6">
       <ProfileForm
         username={profile.username}
-        email={profile.email}
-        emailVerified={profile.email_verified}
         fullName={profile.full_name ?? ""}
       />
       <LoyaltyCard
