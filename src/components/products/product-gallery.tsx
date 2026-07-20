@@ -25,9 +25,15 @@ export function ProductGallery({ images }: { images: ProductImage[] }) {
   const { setSelected } = useSelectedImage();
 
   useEffect(() => {
-    setSelected(selectedIndex, sorted.length, selected?.alt_text ?? null);
+    setSelected({
+      id: selected?.id ?? null,
+      url: selected?.url ?? null,
+      index: selectedIndex,
+      total: sorted.length,
+      label: selected?.alt_text ?? null,
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedIndex, sorted.length, selected?.alt_text]);
+  }, [selectedIndex, sorted.length, selected?.id, selected?.url, selected?.alt_text]);
 
   function showPrev() {
     setSelectedIndex((i) => (i - 1 + sorted.length) % sorted.length);

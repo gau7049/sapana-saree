@@ -121,6 +121,8 @@ export type AdminWhatsAppLog = {
   created_at: string;
   profiles: { username: string; full_name: string | null } | null;
   products: { title: string; slug: string } | null;
+  // The specific saree photo, when the product bundles more than one.
+  product_images: { url: string } | null;
 };
 
 export interface WhatsAppLogFilters {
@@ -152,7 +154,10 @@ export async function getWhatsAppLogs(
 
   let query = supabase
     .from("whatsapp_logs")
-    .select("*, profiles(username, full_name), products(title, slug)", { count: "exact" });
+    .select(
+      "*, profiles(username, full_name), products(title, slug), product_images(url)",
+      { count: "exact" }
+    );
 
   if (filters.search?.trim()) {
     query = query.ilike("message", `%${filters.search.trim().replace(/[%_]/g, "")}%`);

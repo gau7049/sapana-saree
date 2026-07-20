@@ -108,6 +108,7 @@ export interface Inquiry {
   id: string;
   user_id: string;
   product_id: string;
+  product_image_id: string | null;
   status: InquiryStatus;
   whatsapp_message: string;
   notes: string | null;
@@ -117,6 +118,7 @@ export interface Inquiry {
   shipped_at: string | null;
   delivered_at: string | null;
   points_redeemed: number;
+  ip_address: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -175,6 +177,7 @@ export interface WhatsAppLog {
   id: string;
   user_id: string | null;
   product_id: string | null;
+  product_image_id: string | null;
   kind: WhatsAppLogKind;
   message: string;
   status: string;

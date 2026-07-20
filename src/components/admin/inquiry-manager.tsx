@@ -31,6 +31,7 @@ interface InquiryRow {
   tracking_courier: string | null;
   tracking_number: string | null;
   points_redeemed: number;
+  ip_address: string | null;
   created_at: string;
   profiles: {
     full_name: string | null;
@@ -50,6 +51,9 @@ interface InquiryRow {
     price: number;
     product_images?: { url: string; is_primary: boolean; sort_order: number }[];
   } | null;
+  // The specific saree photo the customer picked, when this listing bundles
+  // more than one — falls back to the product's primary photo when absent.
+  product_images: { url: string } | null;
 }
 
 function productThumbnail(
@@ -130,7 +134,9 @@ export function InquiryManager({ inquiries }: { inquiries: InquiryRow[] }) {
             <div className="flex items-start gap-3">
               {inquiry.products &&
                 (() => {
-                  const thumbnail = productThumbnail(inquiry.products?.product_images);
+                  const thumbnail =
+                    inquiry.product_images?.url ??
+                    productThumbnail(inquiry.products?.product_images);
                   return thumbnail ? (
                     <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-md border bg-muted">
                       <ProgressiveImage
@@ -140,6 +146,14 @@ export function InquiryManager({ inquiries }: { inquiries: InquiryRow[] }) {
                         sizes="56px"
                         className="object-cover"
                       />
+                      {inquiry.product_images && (
+                        <span
+                          title="Customer picked this exact saree"
+                          className="absolute right-0 bottom-0 rounded-tl bg-primary px-1 text-[9px] font-medium text-primary-foreground"
+                        >
+                          picked
+                        </span>
+                      )}
                     </div>
                   ) : null;
                 })()}
@@ -202,6 +216,17 @@ export function InquiryManager({ inquiries }: { inquiries: InquiryRow[] }) {
               <div>
                 <span className="text-muted-foreground">Phone: </span>
                 <span className="font-medium">{inquiry.profiles.phone}</span>
+              </div>
+            )}
+            {inquiry.ip_address && (
+              <div>
+                <span
+                  className="text-muted-foreground"
+                  title="Audit only — cross-check against the delivery address if an order looks suspicious"
+                >
+                  Order IP:{" "}
+                </span>
+                <span className="font-medium">{inquiry.ip_address}</span>
               </div>
             )}
             <div>

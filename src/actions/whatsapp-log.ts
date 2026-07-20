@@ -24,7 +24,8 @@ const VALID_KINDS: WhatsAppLogKind[] = [
 export async function logWhatsAppEvent(
   kind: WhatsAppLogKind,
   message: string,
-  productId?: string | null
+  productId?: string | null,
+  productImageId?: string | null
 ) {
   if (!VALID_KINDS.includes(kind) || !message) return;
 
@@ -34,6 +35,7 @@ export async function logWhatsAppEvent(
   const { error } = await admin.from("whatsapp_logs").insert({
     user_id: profile?.id ?? null,
     product_id: productId ?? null,
+    product_image_id: productImageId ?? null,
     kind,
     message: message.slice(0, 4000),
   });

@@ -192,6 +192,7 @@ export default async function AccountInquiriesPage() {
                     kind="unboxing"
                     logMessage={`Unboxing video for: ${inquiry.products?.title ?? "order"}`}
                     productId={inquiry.product_id}
+                    productImageId={inquiry.product_image_id}
                     className={cn(
                       buttonVariants({ variant: "outline", size: "sm" }),
                       "mt-2 h-auto max-w-full items-start py-1.5 text-left whitespace-normal"
@@ -221,6 +222,7 @@ export default async function AccountInquiriesPage() {
                     kind="inquiry_reopen"
                     logMessage={inquiry.whatsapp_message}
                     productId={inquiry.product_id}
+                    productImageId={inquiry.product_image_id}
                     className={buttonVariants({ variant: "outline", size: "sm" })}
                   >
                     <MessageCircle className="mr-1.5 h-3.5 w-3.5" />

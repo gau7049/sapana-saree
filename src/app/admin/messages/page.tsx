@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import Link from "next/link";
+import { ProgressiveImage } from "@/components/shared/progressive-image";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Pagination } from "@/components/shared/pagination";
 import { Mail, MessageCircle } from "lucide-react";
@@ -132,6 +133,17 @@ export default async function AdminMessagesPage({ searchParams }: Props) {
                 <details key={log.id} className="rounded-lg border bg-card p-3">
                   <summary className="flex cursor-pointer list-none items-center justify-between gap-2 text-sm">
                     <span className="flex min-w-0 items-center gap-2">
+                      {log.product_images && (
+                        <div className="relative h-8 w-8 shrink-0 overflow-hidden rounded border bg-muted">
+                          <ProgressiveImage
+                            src={log.product_images.url}
+                            alt={log.products?.title ?? "Selected saree"}
+                            fill
+                            sizes="32px"
+                            className="object-cover"
+                          />
+                        </div>
+                      )}
                       <Badge variant="secondary" className="shrink-0 text-xs">
                         {WHATSAPP_KIND_LABEL[log.kind] ?? log.kind}
                       </Badge>
@@ -163,6 +175,19 @@ export default async function AdminMessagesPage({ searchParams }: Props) {
                       >
                         {log.products.title}
                       </Link>
+                    </p>
+                  )}
+                  {log.product_images && (
+                    <p className="mt-1 text-xs">
+                      <span className="text-muted-foreground">Selected saree photo: </span>
+                      <a
+                        href={log.product_images.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="font-medium text-primary hover:underline"
+                      >
+                        View photo
+                      </a>
                     </p>
                   )}
                   <pre className="mt-2 rounded bg-muted p-2 text-xs whitespace-pre-wrap">

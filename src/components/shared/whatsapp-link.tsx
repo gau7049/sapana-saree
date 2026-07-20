@@ -13,6 +13,7 @@ export function WhatsAppLink({
   kind,
   logMessage,
   productId,
+  productImageId,
   className,
   children,
 }: {
@@ -20,6 +21,7 @@ export function WhatsAppLink({
   kind: WhatsAppLogKind;
   logMessage: string;
   productId?: string | null;
+  productImageId?: string | null;
   className?: string;
   children: React.ReactNode;
 }) {
@@ -30,7 +32,7 @@ export function WhatsAppLink({
       rel="noopener noreferrer"
       className={className}
       onClick={() => {
-        logWhatsAppEvent(kind, logMessage, productId).catch(() => {});
+        logWhatsAppEvent(kind, logMessage, productId, productImageId).catch(() => {});
       }}
     >
       {children}

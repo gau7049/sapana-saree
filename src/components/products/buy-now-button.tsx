@@ -19,6 +19,7 @@ import { createInquiry } from "@/actions/inquiries";
 import { isReadyForCheckout, hasSavedAddress } from "@/lib/profile-helpers";
 import { CheckoutModal } from "@/components/products/checkout-modal";
 import { useSelectedImage } from "@/components/products/selected-image-context";
+import { ProgressiveImage } from "@/components/shared/progressive-image";
 import { useOrigin } from "@/hooks/use-origin";
 import {
   PaymentChoice,
@@ -33,7 +34,8 @@ function buildInquiryDetails(
   paymentMethod: PaymentMethod,
   pointsRedeemed: number,
   pointValueInr: number,
-  selectedVariant?: string
+  selectedVariant?: string,
+  selectedImageUrl?: string
 ): WhatsAppInquiry {
   return {
     productTitle: product.title,
@@ -43,6 +45,7 @@ function buildInquiryDetails(
     userName: profile.full_name ?? profile.username,
     userPhone: profile.phone ?? undefined,
     selectedVariant,
+    selectedImageUrl,
     paymentMethod,
     pointsRedeemed,
     pointValueInr,
@@ -71,9 +74,10 @@ export function BuyNowButton({
   const [modalOpen, setModalOpen] = useState(false);
   const [paymentOpen, setPaymentOpen] = useState(false);
   const [orderPlacedOpen, setOrderPlacedOpen] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const router = useRouter();
   const origin = useOrigin();
-  const { index, total, label } = useSelectedImage();
+  const { id: imageId, url: imageUrl, index, total, label } = useSelectedImage();
 
   function fireWhatsApp(
     p: Profile,
@@ -90,7 +94,8 @@ export function BuyNowButton({
       paymentMethod,
       pointsRedeemed,
       pointValueInr,
-      selectedVariant
+      selectedVariant,
+      total > 1 ? (imageUrl ?? undefined) : undefined
     );
     // Log the inquiry in the background — never let a DB hiccup block the
     // actual WhatsApp handoff, which is the real conversion action.
@@ -98,17 +103,29 @@ export function BuyNowButton({
       product.id,
       buildWhatsAppMessage(details),
       paymentMethod,
-      pointsRedeemed
+      pointsRedeemed,
+      total > 1 ? imageId : null
     ).catch(() => {});
     window.open(buildWhatsAppUrl(details), "_blank");
     setOrderPlacedOpen(true);
   }
 
-  function handleBuyNow() {
+  function proceedToCheckout() {
     if (profile && isReadyForCheckout(profile)) {
       setPaymentOpen(true);
     } else {
       setModalOpen(true);
+    }
+  }
+
+  function handleBuyNow() {
+    // Listings can bundle several sarees under one product — confirm which
+    // photo the customer means before we hand off, so the admin doesn't have
+    // to ask. Only relevant when there's more than one to pick from.
+    if (total > 1) {
+      setConfirmOpen(true);
+    } else {
+      proceedToCheckout();
     }
   }
 
@@ -118,6 +135,44 @@ export function BuyNowButton({
         <MessageCircle className="h-5 w-5" />
         {product.is_available ? "Buy Now via WhatsApp" : "Ask About Restock"}
       </Button>
+
+      {/* This listing has multiple sarees — confirm which photo before
+          continuing, so the exact one reaches the admin without guesswork. */}
+      <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Order this saree?</DialogTitle>
+            <DialogDescription>
+              This listing has {total} sarees. We&apos;ll let the admin know
+              exactly which one you want.
+            </DialogDescription>
+          </DialogHeader>
+          {imageUrl && (
+            <div className="relative mx-auto aspect-3/4 w-40 overflow-hidden rounded-lg border">
+              <ProgressiveImage
+                src={imageUrl}
+                alt={label ?? product.title}
+                fill
+                sizes="160px"
+                className="object-cover"
+              />
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConfirmOpen(false)}>
+              Choose a different one
+            </Button>
+            <Button
+              onClick={() => {
+                setConfirmOpen(false);
+                proceedToCheckout();
+              }}
+            >
+              Yes, order this saree
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Repeat buyers with a complete profile: pick payment (and points to
           redeem), then straight to WhatsApp — the click on a payment option is

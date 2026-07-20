@@ -14,7 +14,8 @@ export async function createInquiry(
   productId: string,
   whatsappMessage: string,
   paymentMethod?: PaymentMethod,
-  pointsToRedeem?: number
+  pointsToRedeem?: number,
+  productImageId?: string | null
 ) {
   let user;
   try {
@@ -34,8 +35,12 @@ export async function createInquiry(
     .insert({
       user_id: user.id,
       product_id: productId,
+      product_image_id: productImageId ?? null,
       whatsapp_message: whatsappMessage,
       payment_method: paymentMethod ?? null,
+      // Audit trail only (never shown to the customer): lets admin sanity-check
+      // a delivery address against where the order actually came from.
+      ip_address: ip,
       // "initiated", not "sent": the client can't verify the WhatsApp tab
       // actually opened (popup blockers), so don't overstate what happened.
       status: "initiated",
@@ -68,6 +73,7 @@ export async function createInquiry(
   await admin.from("whatsapp_logs").insert({
     user_id: user.id,
     product_id: productId,
+    product_image_id: productImageId ?? null,
     kind: "order",
     message: whatsappMessage,
   });

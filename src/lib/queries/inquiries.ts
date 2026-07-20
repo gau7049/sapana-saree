@@ -7,7 +7,7 @@ export async function getAdminInquiries() {
   const { data, error } = await supabase
     .from("inquiries")
     .select(
-      "*, profiles(full_name, username, phone, address_line1, address_line2, city, state, country, postal_code, loyalty_transactions(points)), products(title, slug, price, product_images(url, is_primary, sort_order))"
+      "*, profiles(full_name, username, phone, address_line1, address_line2, city, state, country, postal_code, loyalty_transactions(points)), products(title, slug, price, product_images(url, is_primary, sort_order)), product_images(url)"
     )
     .order("created_at", { ascending: false });
 
