@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { actionError, actionSuccess } from "@/lib/api/response";
@@ -47,6 +47,7 @@ export async function createReview(productId: string, formData: FormData) {
   }
 
   revalidatePath("/admin/reviews");
+  revalidateTag("dashboard-stats", "max");
   return actionSuccess(msg.SUBMITTED);
 }
 
@@ -89,6 +90,7 @@ export async function moderateReview(
 
   revalidatePath("/admin/reviews");
   revalidatePath("/sarees");
+  revalidateTag("dashboard-stats", "max");
   return actionSuccess(msg.MODERATED(status));
 }
 

@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { actionError, actionSuccess } from "@/lib/api/response";
@@ -73,6 +73,7 @@ export async function createInquiry(
 
   revalidatePath("/admin/inquiries");
   revalidatePath("/account/inquiries");
+  revalidateTag("dashboard-stats", "max");
   return actionSuccess(msg.LOGGED);
 }
 
@@ -127,5 +128,6 @@ export async function updateInquiryStatus(
 
   revalidatePath("/admin/inquiries");
   revalidatePath("/account/inquiries");
+  revalidateTag("dashboard-stats", "max");
   return actionSuccess(msg.STATUS_CHANGED(status));
 }

@@ -11,7 +11,7 @@ async function fetchDashboardStats() {
     supabase
       .from("inquiries")
       .select("id", { count: "exact", head: true })
-      .in("status", ["sent", "responded"]),
+      .in("status", ["initiated", "sent", "responded", "shipped"]),
     supabase
       .from("reviews")
       .select("id", { count: "exact", head: true })
