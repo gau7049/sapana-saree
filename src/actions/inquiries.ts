@@ -7,6 +7,7 @@ import { actionError, actionSuccess } from "@/lib/api/response";
 import type { InquiryStatus, PaymentMethod } from "@/types";
 import { common, inquiries as msg } from "@/lib/messages";
 import { requireAdmin, requireAuth } from "@/lib/auth-guard";
+import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 import { redeemPoints, refundRedemption, processDeliveredOrder } from "@/lib/loyalty";
 
 export async function createInquiry(
@@ -20,6 +21,11 @@ export async function createInquiry(
     user = await requireAuth();
   } catch {
     return actionError(common.NOT_AUTHENTICATED);
+  }
+
+  const ip = await getClientIp();
+  if (!checkRateLimit(`inquiry:create:${ip}`, 20, 60_000).allowed) {
+    return actionError(common.RATE_LIMIT_EXCEEDED);
   }
 
   const supabase = await createClient();
@@ -42,11 +48,16 @@ export async function createInquiry(
   // Redemption is validated against the server-side ledger — a tampered client
   // can put anything in its message, but points only leave the ledger here,
   // and the admin card shows the ledger-backed amount.
+  const admin = createAdminClient();
+
   const requested = Math.max(0, Math.floor(pointsToRedeem ?? 0));
   if (requested > 0) {
     const redeemed = await redeemPoints(user.id, requested, inquiry.id);
     if (redeemed.ok) {
-      await supabase
+      // Inquiries has no user-writable UPDATE policy (customers can't tamper
+      // with their own order status/tracking) — use the admin client for this
+      // system-computed field, same as the ledger deduction above.
+      await admin
         .from("inquiries")
         .update({ points_redeemed: requested })
         .eq("id", inquiry.id);
@@ -54,7 +65,6 @@ export async function createInquiry(
   }
 
   // Audit trail of system-generated WhatsApp messages.
-  const admin = createAdminClient();
   await admin.from("whatsapp_logs").insert({
     user_id: user.id,
     kind: "order",

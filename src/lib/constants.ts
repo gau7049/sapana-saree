@@ -17,7 +17,7 @@ export const ORDER_TERMS = [
   "An uncut, unpaused unboxing video is required for any damage or wrong-item claim",
 ] as const;
 
-export const MAX_IMAGES_PER_PRODUCT = 8;
+export const MAX_IMAGES_PER_PRODUCT = 12;
 export const MAX_IMAGE_SIZE_MB = 5;
 export const MAX_IMAGE_SIZE_BYTES = MAX_IMAGE_SIZE_MB * 1024 * 1024;
 export const ALLOWED_IMAGE_TYPES = [

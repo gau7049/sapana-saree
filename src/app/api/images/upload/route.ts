@@ -2,22 +2,24 @@ import { revalidateTag, revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/auth-guard";
 import { createClient } from "@/lib/supabase/server";
 import { apiSuccess, apiError } from "@/lib/api/response";
+import { isSameOrigin } from "@/lib/api/origin-check";
 import { common, auth as authMsg, images as imgMsg } from "@/lib/messages";
 import { createLogger } from "@/lib/logger";
 import { saveUploadedImage } from "@/lib/upload-image";
 import { cleanupImageFile } from "@/lib/cloudinary";
-import { HTTP_STATUS, MAX_IMAGE_SIZE_BYTES, ALLOWED_IMAGE_TYPES } from "@/lib/constants";
+import {
+  HTTP_STATUS,
+  MAX_IMAGE_SIZE_BYTES,
+  ALLOWED_IMAGE_TYPES,
+  MAX_IMAGES_PER_PRODUCT,
+} from "@/lib/constants";
 
 const logger = createLogger("api:images:upload");
 
 export async function POST(request: Request) {
   const requestId = request.headers.get("x-request-id") ?? "unknown";
 
-  // Same-origin check — Route Handlers don't get Next's automatic Server
-  // Action CSRF protection.
-  const origin = request.headers.get("origin");
-  const host = request.headers.get("host");
-  if (origin && host && !origin.includes(host)) {
+  if (!isSameOrigin(request)) {
     return apiError(common.FORBIDDEN, HTTP_STATUS.FORBIDDEN);
   }
 
@@ -44,15 +46,22 @@ export async function POST(request: Request) {
       return apiError(common.FILE_TOO_LARGE, HTTP_STATUS.BAD_REQUEST);
     }
 
-    // Cloudinary when configured; otherwise the helper falls back to local
-    // disk so upload still works in a bare dev environment.
-    const uploaded = await saveUploadedImage(file, "sapana-saree/products");
-
     const supabase = await createClient();
     const { count: existingCount } = await supabase
       .from("product_images")
       .select("id", { count: "exact", head: true })
       .eq("product_id", productId);
+
+    if ((existingCount ?? 0) >= MAX_IMAGES_PER_PRODUCT) {
+      return apiError(
+        imgMsg.TOO_MANY_IMAGES(MAX_IMAGES_PER_PRODUCT),
+        HTTP_STATUS.BAD_REQUEST
+      );
+    }
+
+    // Cloudinary when configured; otherwise the helper falls back to local
+    // disk so upload still works in a bare dev environment.
+    const uploaded = await saveUploadedImage(file, "sapana-saree/products");
 
     const { data: image, error: insertError } = await supabase
       .from("product_images")

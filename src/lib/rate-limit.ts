@@ -1,4 +1,18 @@
+import { headers } from "next/headers";
 import { RATE_LIMIT_MAX, RATE_LIMIT_WINDOW_MS } from "@/lib/constants";
+
+// Server Actions (unlike /api/* Route Handlers) aren't covered by the
+// middleware's rate limiter, since Next doesn't route them through a
+// matchable pathname there. Callers that need per-action limits read the
+// caller's IP this way and check it directly with checkRateLimit().
+export async function getClientIp(): Promise<string> {
+  const h = await headers();
+  return (
+    h.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+    h.get("x-real-ip") ??
+    "unknown"
+  );
+}
 
 // In-memory, per-instance limiter — fine for a single Node process, but
 // resets on redeploy/restart and won't share state across multiple instances.

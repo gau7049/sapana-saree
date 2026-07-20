@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { awardWelcomePoints, attachReferral, ensureReferralCode } from "@/lib/loyalty";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { actionError, actionSuccess } from "@/lib/api/response";
+import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 import { common, auth as msg } from "@/lib/messages";
 import { getServerSiteUrl } from "@/lib/site-url";
 import { normalizeUsername, isValidUsername, synthesizeAuthEmail } from "@/lib/username";
@@ -19,6 +20,11 @@ function safeRedirectPath(url: string | null): string {
 }
 
 export async function signUp(formData: FormData) {
+  const ip = await getClientIp();
+  if (!checkRateLimit(`auth:signup:${ip}`, 5, 60_000).allowed) {
+    return actionError(common.RATE_LIMIT_EXCEEDED);
+  }
+
   const username = normalizeUsername((formData.get("username") as string) ?? "");
   const fullName = ((formData.get("full_name") as string) ?? "").trim() || null;
   const realEmail = ((formData.get("email") as string) ?? "").trim() || null;
@@ -85,6 +91,13 @@ export async function signUp(formData: FormData) {
 }
 
 export async function signIn(formData: FormData) {
+  const ip = await getClientIp();
+  // Tighter than the default API limit — this guards password brute-forcing,
+  // not general traffic.
+  if (!checkRateLimit(`auth:signin:${ip}`, 10, 60_000).allowed) {
+    return actionError(common.RATE_LIMIT_EXCEEDED);
+  }
+
   const username = normalizeUsername((formData.get("username") as string) ?? "");
   const password = formData.get("password") as string;
 
@@ -108,6 +121,12 @@ export async function signOut() {
 }
 
 export async function forgotPassword(formData: FormData) {
+  const ip = await getClientIp();
+  // Sends an email per successful call — keep this the strictest limit here.
+  if (!checkRateLimit(`auth:forgot:${ip}`, 3, 60_000).allowed) {
+    return actionError(common.RATE_LIMIT_EXCEEDED);
+  }
+
   const username = normalizeUsername((formData.get("username") as string) ?? "");
 
   const admin = createAdminClient();
@@ -141,6 +160,11 @@ export async function forgotPassword(formData: FormData) {
 }
 
 export async function resetPassword(formData: FormData) {
+  const ip = await getClientIp();
+  if (!checkRateLimit(`auth:reset:${ip}`, 5, 60_000).allowed) {
+    return actionError(common.RATE_LIMIT_EXCEEDED);
+  }
+
   const password = formData.get("password") as string;
 
   const supabase = await createClient();

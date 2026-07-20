@@ -1,16 +1,13 @@
 import { createClient } from "@/lib/supabase/server";
 import { apiSuccess, apiError } from "@/lib/api/response";
+import { isSameOrigin } from "@/lib/api/origin-check";
 import { common, contact as msg } from "@/lib/messages";
 import { HTTP_STATUS } from "@/lib/constants";
 import { contactSchema } from "@/lib/validators/contact";
 import { sendContactNotification } from "@/lib/brevo/send-contact-notification";
 
 export async function POST(request: Request) {
-  // Server Actions get same-origin CSRF protection from Next automatically;
-  // plain Route Handlers like this one don't, so check it by hand.
-  const origin = request.headers.get("origin");
-  const host = request.headers.get("host");
-  if (origin && host && !origin.includes(host)) {
+  if (!isSameOrigin(request)) {
     return apiError(common.FORBIDDEN, HTTP_STATUS.FORBIDDEN);
   }
 

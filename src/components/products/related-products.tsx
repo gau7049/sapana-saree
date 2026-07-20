@@ -11,9 +11,11 @@ export function RelatedProducts({
   return (
     <section className="mt-16">
       <h2 className="text-xl font-bold">You May Also Like</h2>
-      <div className="mt-6 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+      <div className="mt-6 flex gap-3 overflow-x-auto pb-2 scrollbar-none sm:grid sm:grid-cols-2 sm:gap-4 sm:overflow-visible sm:pb-0 lg:grid-cols-4">
         {products.map((product) => (
-          <ProductCard key={product.id} product={product} />
+          <div key={product.id} className="w-[42vw] shrink-0 sm:w-auto">
+            <ProductCard product={product} />
+          </div>
         ))}
       </div>
     </section>

@@ -6,6 +6,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { actionError, actionSuccess } from "@/lib/api/response";
 import { common, reviews as msg } from "@/lib/messages";
 import { requireAdmin, requireAuth } from "@/lib/auth-guard";
+import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 import { awardReviewPoints, revokeReviewPoints } from "@/lib/loyalty";
 
 export async function createReview(productId: string, formData: FormData) {
@@ -14,6 +15,11 @@ export async function createReview(productId: string, formData: FormData) {
     user = await requireAuth();
   } catch {
     return actionError(common.NOT_AUTHENTICATED);
+  }
+
+  const ip = await getClientIp();
+  if (!checkRateLimit(`review:create:${ip}`, 10, 60_000).allowed) {
+    return actionError(common.RATE_LIMIT_EXCEEDED);
   }
 
   const rating = Number(formData.get("rating"));

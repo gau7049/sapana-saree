@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
+import { ProgressiveImage } from "@/components/shared/progressive-image";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Upload, X, Loader2 } from "lucide-react";
@@ -78,7 +78,7 @@ export function CategoryImageUpload({
     <div className="flex items-center gap-3">
       <div className="relative aspect-4/3 w-24 shrink-0 overflow-hidden rounded-md border bg-muted">
         {url ? (
-          <Image src={url} alt="Category image" fill sizes="96px" className="object-cover" />
+          <ProgressiveImage src={url} alt="Category image" fill sizes="96px" className="object-cover" />
         ) : (
           <div className="flex h-full items-center justify-center text-xl">🪡</div>
         )}

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import Image from "next/image";
+import { ProgressiveImage } from "@/components/shared/progressive-image";
 import { Button } from "@/components/ui/button";
 import { Upload, X, Star, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
 import { deleteProductImage, setPrimaryImage, updateImageOrder } from "@/actions/images";
@@ -124,7 +124,7 @@ export function ImageUpload({
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
         {images.map((image, index) => (
           <div key={image.id} className="group relative aspect-3/4 overflow-hidden rounded-lg border">
-            <Image
+            <ProgressiveImage
               src={image.url}
               alt={image.alt_text ?? "Product image"}
               fill

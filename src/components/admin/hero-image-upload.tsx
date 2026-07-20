@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import Image from "next/image";
+import { ProgressiveImage } from "@/components/shared/progressive-image";
 import { Button } from "@/components/ui/button";
 import { Upload, X, Loader2 } from "lucide-react";
 import { handleFetch } from "@/lib/action-handler";
@@ -58,7 +58,7 @@ export function HeroImageUpload({ initialUrl }: { initialUrl: string | null }) {
       <div className="relative aspect-4/3 w-full max-w-xs overflow-hidden rounded-lg border bg-muted sm:aspect-video sm:max-w-md">
         {url ? (
           <>
-            <Image src={url} alt="Hero image" fill sizes="400px" className="object-cover" />
+            <ProgressiveImage src={url} alt="Hero image" fill sizes="400px" className="object-cover" />
             <Button
               type="button"
               variant="destructive"

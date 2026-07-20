@@ -1,0 +1,13 @@
+-- The live database has a "Users can update own reviews" policy on `reviews`
+-- that isn't defined in any migration file (created out-of-band, e.g. via the
+-- Supabase dashboard SQL editor). It's broader and more dangerous than the
+-- intended "Users can update own pending reviews" policy fixed in
+-- 017_security_hardening.sql: it has no WITH CHECK and no status
+-- restriction, so a user could update ANY of their own reviews (including
+-- already-approved/rejected ones) to any rating/status/content at any time.
+--
+-- The legitimate self-service case (editing your own still-pending review)
+-- is already covered by "Users can update own pending reviews". Admin
+-- updates are already covered by "Admins can manage reviews". This stray
+-- policy only ever grants EXTRA, unintended access — drop it.
+DROP POLICY IF EXISTS "Users can update own reviews" ON reviews;

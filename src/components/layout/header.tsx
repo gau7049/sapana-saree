@@ -118,7 +118,7 @@ export function Header() {
           {!loading && user && (
             <Link
               href="/wishlist"
-              className={cn(buttonVariants({ variant: "ghost", size: "icon" }), ICON_BUTTON, "hidden sm:inline-flex")}
+              className={cn(buttonVariants({ variant: "ghost", size: "icon" }), ICON_BUTTON, "inline-flex")}
               aria-label="Wishlist"
             >
               <Heart className="h-4.5 w-4.5" />

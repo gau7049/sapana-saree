@@ -148,24 +148,47 @@ export async function getRelatedProducts(
   return (data ?? []) as ProductWithImages[];
 }
 
+export interface HomepageProducts {
+  products: ProductWithImages[];
+  // false when there were no admin-curated picks and the list below is a
+  // fallback of recent arrivals instead — callers use this to adjust the
+  // section heading and "View All" link (?featured=true would show nothing).
+  isFeatured: boolean;
+}
+
 // createStaticClient (no cookies) + unstable_cache below: this runs inside a
 // cache scope, where Next disallows the cookie-aware server client — see
 // lib/supabase/static.ts. Safe here since featured products are public data.
-async function fetchFeaturedProducts() {
+async function fetchHomepageProducts(): Promise<HomepageProducts> {
   const supabase = createStaticClient();
-  const { data, error } = await supabase
+  const { data: featured, error: featuredError } = await supabase
     .from("products")
     .select(PRODUCT_SELECT)
     .eq("is_featured", true)
     .eq("status", "published")
-    .limit(8);
+    .order("created_at", { ascending: false })
+    .limit(10);
 
-  if (error) return [];
-  return (data ?? []) as ProductWithImages[];
+  if (!featuredError && featured && featured.length > 0) {
+    return { products: featured as ProductWithImages[], isFeatured: true };
+  }
+
+  // No products marked featured yet (a manual admin step store owners often
+  // never get to) — fall back to newest arrivals so the homepage always has
+  // a products section instead of silently showing nothing below Categories.
+  const { data: recent, error: recentError } = await supabase
+    .from("products")
+    .select(PRODUCT_SELECT)
+    .eq("status", "published")
+    .order("created_at", { ascending: false })
+    .limit(10);
+
+  if (recentError) return { products: [], isFeatured: false };
+  return { products: (recent ?? []) as ProductWithImages[], isFeatured: false };
 }
 
-export const getFeaturedProducts = cache(
-  unstable_cache(fetchFeaturedProducts, ["featured-products"], {
+export const getHomepageProducts = cache(
+  unstable_cache(fetchHomepageProducts, ["featured-products"], {
     tags: ["featured-products"],
     revalidate: CACHE_TTL,
   })

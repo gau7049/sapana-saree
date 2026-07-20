@@ -15,10 +15,9 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { Loader2, RefreshCw } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { createProduct, updateProduct } from "@/actions/products";
 import { handleAction } from "@/lib/action-handler";
-import { slugify } from "@/lib/utils";
 import { toast } from "sonner";
 import type { Product, Category } from "@/types";
 
@@ -30,7 +29,6 @@ interface ProductFormProps {
 export function ProductForm({ product, categories }: ProductFormProps) {
   const [loading, setLoading] = useState(false);
   const [title, setTitle] = useState(product?.title ?? "");
-  const [slug, setSlug] = useState(product?.slug ?? "");
   const isEditing = !!product;
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -79,38 +77,6 @@ export function ProductForm({ product, categories }: ProductFormProps) {
               minLength={3}
               placeholder="e.g., Banarasi Silk Saree"
             />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="slug">URL Slug{isEditing ? "" : " *"}</Label>
-            <div className="flex gap-2">
-              <Input
-                id="slug"
-                name="slug"
-                value={slug}
-                onChange={(e) => setSlug(e.target.value)}
-                required={!isEditing}
-                placeholder="e.g., banarasi-silk-saree"
-                pattern="[a-z0-9]+(-[a-z0-9]+)*"
-                title="Lowercase letters, numbers, and hyphens only"
-              />
-              <Button
-                type="button"
-                variant="outline"
-                size="icon"
-                title="Regenerate from title"
-                onClick={() => setSlug(slugify(title))}
-                disabled={!title.trim()}
-              >
-                <RefreshCw className="h-4 w-4" />
-              </Button>
-            </div>
-            {isEditing && (
-              <p className="text-xs text-muted-foreground">
-                Changing this changes the product&apos;s public URL. Existing links to
-                the old URL will stop working.
-              </p>
-            )}
           </div>
 
           <div className="space-y-2">

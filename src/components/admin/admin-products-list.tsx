@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";
+import { ProgressiveImage } from "@/components/shared/progressive-image";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
@@ -146,7 +146,7 @@ export function AdminProductsList({ products }: { products: ProductWithImages[] 
 
               <div className="relative aspect-3/4 w-12 shrink-0 overflow-hidden rounded-md bg-muted">
                 {primaryImage ? (
-                  <Image
+                  <ProgressiveImage
                     src={primaryImage.url}
                     alt={primaryImage.alt_text ?? product.title}
                     fill

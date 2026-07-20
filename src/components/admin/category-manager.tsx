@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
+import { ProgressiveImage } from "@/components/shared/progressive-image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -36,6 +36,10 @@ export function CategoryManager({
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
+  // Set once the name/description form submits successfully — switches the
+  // create dialog to its second step (image upload) instead of closing, since
+  // the upload needs a real category id to attach to.
+  const [newCategory, setNewCategory] = useState<{ id: string; name: string } | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Category | null>(null);
 
   const roots = categories.filter((c) => !c.parent_id);
@@ -48,13 +52,18 @@ export function CategoryManager({
     e.preventDefault();
     setLoading(true);
     const formData = new FormData(e.currentTarget);
-    await handleAction(createCategory(formData), {
-      onSuccess: () => {
-        setCreateOpen(false);
-        router.refresh();
-      },
-    });
+    const name = formData.get("name") as string;
+    const result = await handleAction(createCategory(formData));
+    if (result.status && result.result) {
+      setNewCategory({ id: result.result.id, name });
+      router.refresh();
+    }
     setLoading(false);
+  }
+
+  function closeCreateDialog() {
+    setCreateOpen(false);
+    setNewCategory(null);
   }
 
   async function handleUpdate(id: string, formData: FormData) {
@@ -78,48 +87,72 @@ export function CategoryManager({
 
   return (
     <div className="space-y-4">
-      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+      <Dialog
+        open={createOpen}
+        onOpenChange={(open) => {
+          setCreateOpen(open);
+          if (!open) setNewCategory(null);
+        }}
+      >
         <DialogTrigger render={<Button className="gap-2" />}>
           <Plus className="h-4 w-4" />
           Add Category
         </DialogTrigger>
         <DialogContent>
-          <DialogHeader>
-            <DialogTitle>New Category</DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handleCreate} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="new-name">Name *</Label>
-              <Input id="new-name" name="name" required />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="new-desc">Description</Label>
-              <Textarea id="new-desc" name="description" rows={2} />
-            </div>
-            <div className="space-y-2">
-              <Label>Parent Category</Label>
-              <select
-                name="parent_id"
-                className="flex h-8 w-full rounded-lg border border-border bg-background px-3 text-sm"
-              >
-                <option value="">None (top-level)</option>
-                {roots.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="flex justify-end gap-2">
-              <DialogClose render={<Button variant="outline" />}>
-                Cancel
-              </DialogClose>
-              <Button type="submit" disabled={loading}>
-                {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Create
-              </Button>
-            </div>
-          </form>
+          {newCategory ? (
+            <>
+              <DialogHeader>
+                <DialogTitle>Add a photo for &ldquo;{newCategory.name}&rdquo;</DialogTitle>
+                <DialogDescription>
+                  Optional — shown on the homepage &amp; category listing. You can add
+                  or change it later from the pencil icon.
+                </DialogDescription>
+              </DialogHeader>
+              <CategoryImageUpload categoryId={newCategory.id} imageUrl={null} />
+              <div className="flex justify-end">
+                <Button onClick={closeCreateDialog}>Done</Button>
+              </div>
+            </>
+          ) : (
+            <>
+              <DialogHeader>
+                <DialogTitle>New Category</DialogTitle>
+              </DialogHeader>
+              <form onSubmit={handleCreate} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="new-name">Name *</Label>
+                  <Input id="new-name" name="name" required />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="new-desc">Description</Label>
+                  <Textarea id="new-desc" name="description" rows={2} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Parent Category</Label>
+                  <select
+                    name="parent_id"
+                    className="flex h-8 w-full rounded-lg border border-border bg-background px-3 text-sm"
+                  >
+                    <option value="">None (top-level)</option>
+                    {roots.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex justify-end gap-2">
+                  <DialogClose render={<Button variant="outline" />}>
+                    Cancel
+                  </DialogClose>
+                  <Button type="submit" disabled={loading}>
+                    {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Next: Add photo
+                  </Button>
+                </div>
+              </form>
+            </>
+          )}
         </DialogContent>
       </Dialog>
 
@@ -213,7 +246,7 @@ function CategoryRow({
       <div className="flex items-center gap-2.5">
         <div className="relative h-9 w-12 shrink-0 overflow-hidden rounded border bg-muted">
           {category.image_url ? (
-            <Image
+            <ProgressiveImage
               src={category.image_url}
               alt={category.name}
               fill

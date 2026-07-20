@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
@@ -8,6 +9,7 @@ import { ArrowRight, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function HeroSection({ imageUrl }: { imageUrl?: string | null }) {
+  const [failed, setFailed] = useState(false);
   return (
     <section className="bg-secondary/40">
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
@@ -94,7 +96,7 @@ export function HeroSection({ imageUrl }: { imageUrl?: string | null }) {
             className="hidden lg:col-span-2 lg:block"
           >
             <div className="relative aspect-4/3 overflow-hidden border border-border bg-muted">
-              {imageUrl ? (
+              {imageUrl && !failed ? (
                 <Image
                   src={imageUrl}
                   alt="Sapana Saree — premium collection"
@@ -102,6 +104,7 @@ export function HeroSection({ imageUrl }: { imageUrl?: string | null }) {
                   priority
                   sizes="(max-width: 1024px) 0px, 40vw"
                   className="object-cover"
+                  onError={() => setFailed(true)}
                 />
               ) : (
                 <div className="flex h-full flex-col items-center justify-center gap-3 p-8 text-center">

@@ -66,7 +66,16 @@ export async function saveUploadedImage(
   const { writeFile } = await import("fs/promises");
   const { join } = await import("path");
 
-  const ext = file.name.split(".").pop() ?? "jpg";
+  // Extension comes from the validated MIME type, never the client-supplied
+  // filename — otherwise a renamed upload (e.g. "x.html") would land as an
+  // executable-in-the-browser file under the public/ static path, a stored
+  // XSS vector. Callers already reject any file.type outside this map.
+  const EXT_BY_MIME: Record<string, string> = {
+    "image/jpeg": "jpg",
+    "image/png": "png",
+    "image/webp": "webp",
+  };
+  const ext = EXT_BY_MIME[file.type] ?? "jpg";
   const fileName = `${folder.split("/").pop()}-${Date.now()}.${ext}`;
   await writeFile(
     join(process.cwd(), "public", "uploads", "products", fileName),

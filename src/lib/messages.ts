@@ -53,6 +53,7 @@ export const images = {
   PRIMARY_UPDATED: "Primary image updated.",
   UPLOADED: "Image uploaded successfully.",
   UPLOAD_FAILED: (detail: string) => `Upload failed: ${detail}`,
+  TOO_MANY_IMAGES: (max: number) => `Maximum ${max} images per product.`,
   DELETE_ERROR: "Failed to delete image.",
 } as const;
 

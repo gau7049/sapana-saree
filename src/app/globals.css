@@ -136,3 +136,15 @@
     @apply font-sans;
   }
 }
+
+@layer utilities {
+  /* Hides the scrollbar on horizontal-scroll strips (category row, featured
+     products, related products) while keeping the element scrollable. */
+  .scrollbar-none {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+}

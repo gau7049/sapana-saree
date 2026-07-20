@@ -1,9 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ProgressiveImage } from "@/components/shared/progressive-image";
 import type { ProductImage } from "@/types";
+
+// Minimum horizontal drag distance (px) before a touch gesture counts as a
+// swipe rather than a tap/scroll.
+const SWIPE_THRESHOLD = 40;
 
 export function ProductGallery({ images }: { images: ProductImage[] }) {
   // Primary image always leads, regardless of its stored sort_order.
@@ -15,6 +20,28 @@ export function ProductGallery({ images }: { images: ProductImage[] }) {
 
   const [selectedIndex, setSelectedIndex] = useState(0);
   const selected = sorted[selectedIndex];
+  const touchStartX = useRef<number | null>(null);
+
+  function showPrev() {
+    setSelectedIndex((i) => (i - 1 + sorted.length) % sorted.length);
+  }
+
+  function showNext() {
+    setSelectedIndex((i) => (i + 1) % sorted.length);
+  }
+
+  function handleTouchStart(e: React.TouchEvent) {
+    touchStartX.current = e.touches[0].clientX;
+  }
+
+  function handleTouchEnd(e: React.TouchEvent) {
+    if (touchStartX.current === null) return;
+    const delta = e.changedTouches[0].clientX - touchStartX.current;
+    touchStartX.current = null;
+    if (Math.abs(delta) < SWIPE_THRESHOLD) return;
+    if (delta > 0) showPrev();
+    else showNext();
+  }
 
   if (sorted.length === 0) {
     return (
@@ -51,7 +78,11 @@ export function ProductGallery({ images }: { images: ProductImage[] }) {
         </div>
       )}
 
-      <div className="relative order-1 aspect-3/4 flex-1 overflow-hidden border border-border bg-muted sm:order-2">
+      <div
+        className="relative order-1 aspect-3/4 flex-1 overflow-hidden border border-border bg-muted sm:order-2"
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+      >
         {selected && (
           <ProgressiveImage
             key={selected.id}
@@ -62,6 +93,30 @@ export function ProductGallery({ images }: { images: ProductImage[] }) {
             className="object-cover"
             priority
           />
+        )}
+
+        {sorted.length > 1 && (
+          <>
+            <button
+              type="button"
+              onClick={showPrev}
+              aria-label="Previous image"
+              className="absolute top-1/2 left-2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-background/80 text-foreground backdrop-blur-sm transition-colors hover:bg-background"
+            >
+              <ChevronLeft className="h-5 w-5" />
+            </button>
+            <button
+              type="button"
+              onClick={showNext}
+              aria-label="Next image"
+              className="absolute top-1/2 right-2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-background/80 text-foreground backdrop-blur-sm transition-colors hover:bg-background"
+            >
+              <ChevronRight className="h-5 w-5" />
+            </button>
+            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 rounded-full bg-background/80 px-2 py-0.5 text-xs text-foreground backdrop-blur-sm">
+              {selectedIndex + 1} / {sorted.length}
+            </div>
+          </>
         )}
       </div>
     </div>

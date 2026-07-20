@@ -2,6 +2,7 @@ import { revalidateTag, revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/auth-guard";
 import { createClient } from "@/lib/supabase/server";
 import { apiSuccess, apiError } from "@/lib/api/response";
+import { isSameOrigin } from "@/lib/api/origin-check";
 import { common, auth as authMsg, images as imgMsg } from "@/lib/messages";
 import { createLogger } from "@/lib/logger";
 import { saveUploadedImage } from "@/lib/upload-image";
@@ -22,11 +23,7 @@ function revalidateCategoryCaches() {
 export async function POST(request: Request) {
   const requestId = request.headers.get("x-request-id") ?? "unknown";
 
-  // Same-origin check — Route Handlers don't get Next's automatic Server
-  // Action CSRF protection.
-  const origin = request.headers.get("origin");
-  const host = request.headers.get("host");
-  if (origin && host && !origin.includes(host)) {
+  if (!isSameOrigin(request)) {
     return apiError(common.FORBIDDEN, HTTP_STATUS.FORBIDDEN);
   }
 
@@ -96,6 +93,10 @@ export async function POST(request: Request) {
 
 export async function DELETE(request: Request) {
   const requestId = request.headers.get("x-request-id") ?? "unknown";
+
+  if (!isSameOrigin(request)) {
+    return apiError(common.FORBIDDEN, HTTP_STATUS.FORBIDDEN);
+  }
 
   try {
     await requireAdmin();

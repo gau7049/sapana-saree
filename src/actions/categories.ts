@@ -21,12 +21,16 @@ export async function createCategory(formData: FormData) {
   if (!name?.trim()) return actionError(common.MISSING_REQUIRED_FIELDS);
 
   const supabase = await createClient();
-  const { error } = await supabase.from("categories").insert({
-    name,
-    slug: slugify(name),
-    description,
-    parent_id: parentId,
-  });
+  const { data, error } = await supabase
+    .from("categories")
+    .insert({
+      name,
+      slug: slugify(name),
+      description,
+      parent_id: parentId,
+    })
+    .select("id")
+    .single();
 
   if (error) {
     // 23505 = Postgres unique-violation (slug/name collision).
@@ -38,7 +42,7 @@ export async function createCategory(formData: FormData) {
   updateTag("categories");
   revalidatePath("/admin/categories");
   revalidatePath("/categories");
-  return actionSuccess(msg.CREATED);
+  return actionSuccess(msg.CREATED, { id: data.id });
 }
 
 // Slug is re-derived from name on every update (not just at creation) so

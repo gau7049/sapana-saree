@@ -2,27 +2,34 @@ import Link from "next/link";
 import { buttonVariants } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { getFeaturedProducts } from "@/lib/queries/products";
+import { getHomepageProducts } from "@/lib/queries/products";
 import { ProductCard } from "@/components/products/product-card";
 
 export async function FeaturedProducts() {
-  const products = await getFeaturedProducts();
+  const { products, isFeatured } = await getHomepageProducts();
 
   if (products.length === 0) return null;
+
+  // "View All" only makes sense with the featured filter when these actually
+  // are the admin-curated picks — otherwise ?featured=true would land on an
+  // empty results page.
+  const viewAllHref = isFeatured ? "/sarees?featured=true" : "/sarees";
 
   return (
     <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-14 lg:px-8">
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-lg font-bold sm:text-xl">
-            Featured Sarees
+            {isFeatured ? "Featured Sarees" : "New Arrivals"}
           </h2>
           <p className="mt-0.5 text-sm text-muted-foreground">
-            Handpicked favorites from our collection
+            {isFeatured
+              ? "Handpicked favorites from our collection"
+              : "Freshly added to our collection"}
           </p>
         </div>
         <Link
-          href="/sarees?featured=true"
+          href={viewAllHref}
           className={cn(
             buttonVariants({ variant: "ghost", size: "sm" }),
             "hidden gap-1 text-primary sm:inline-flex"
@@ -33,16 +40,21 @@ export async function FeaturedProducts() {
         </Link>
       </div>
 
-      <div className="mt-6 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-5">
+      {/* Mobile: horizontal-scroll strip so the section stays a single row
+          instead of adding another long wrapping grid to scroll past.
+          sm and up: switches to the regular wrapping grid. */}
+      <div className="mt-6 flex gap-3 overflow-x-auto pb-2 scrollbar-none sm:grid sm:grid-cols-2 sm:gap-4 sm:overflow-visible sm:pb-0 lg:grid-cols-4 xl:grid-cols-5">
         {products.slice(0, 10).map((product, index) => (
-          // Eagerly load only the images visible above the fold on first paint.
-          <ProductCard key={product.id} product={product} priority={index < 4} />
+          <div key={product.id} className="w-[42vw] shrink-0 sm:w-auto">
+            {/* Eagerly load only the images visible above the fold on first paint. */}
+            <ProductCard product={product} priority={index < 4} />
+          </div>
         ))}
       </div>
 
       <div className="mt-6 text-center sm:hidden">
         <Link
-          href="/sarees?featured=true"
+          href={viewAllHref}
           className={cn(
             buttonVariants({ variant: "outline", size: "sm" }),
             "gap-1"
